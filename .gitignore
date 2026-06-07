@@ -1,0 +1,32 @@
+# ─── Secrets / env (HECH QACHON commit qilinmaydi) ───
+.env
+*/.env
+backend/.env
+frontend/.env
+
+# ─── Node / SvelteKit ───
+node_modules/
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+.vite/
+
+# ─── Go build artefaktlari ───
+*.exe
+*.exe~
+backend/gogame
+backend/server
+backend/server_new
+
+# ─── Yuklamalar / loglar ───
+uploads/
+backend/uploads/
+*.log
+data/logs/
+
+# ─── Tahrirlovchi / tizim ───
+.claude/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
