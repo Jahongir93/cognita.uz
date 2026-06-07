@@ -91,6 +91,82 @@ type openAIResponse struct {
 	} `json:"error"`
 }
 
+// TestConnectionRequest is the body for POST /api/ai/test.
+type TestConnectionRequest struct {
+	Provider string `json:"provider"` // "groq" | "openai" | "gemini"
+	Key      string `json:"key"`      // optional: test this key; if empty, test the saved one
+}
+
+// providerInfo maps a provider id to its settings key and "list models" URL,
+// which we use as a lightweight, side-effect-free connectivity check.
+func providerInfo(provider string) (settingKey, modelsURL string, ok bool) {
+	switch provider {
+	case "groq":
+		return "groq_api_key", "https://api.groq.com/openai/v1/models", true
+	case "openai":
+		return "openai_api_key", "https://api.openai.com/v1/models", true
+	case "gemini":
+		return "gemini_api_key", "https://generativelanguage.googleapis.com/v1beta/models", true
+	default:
+		return "", "", false
+	}
+}
+
+// POST /api/ai/test — checks whether an AI provider key is valid / reachable.
+func (h *AIHandler) TestConnection(c *fiber.Ctx) error {
+	var req TestConnectionRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+
+	settingKey, modelsURL, ok := providerInfo(req.Provider)
+	if !ok {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Noma'lum provider"})
+	}
+
+	// Use the supplied key, unless it's empty or a masked placeholder — then
+	// fall back to the stored key.
+	key := strings.TrimSpace(req.Key)
+	if key == "" || strings.HasPrefix(key, "****") {
+		key = h.loadSetting(settingKey, "")
+	}
+	if key == "" {
+		return c.JSON(fiber.Map{"ok": false, "message": "Kalit kiritilmagan"})
+	}
+
+	// Build the connectivity-check request.
+	var httpReq *http.Request
+	var err error
+	if req.Provider == "gemini" {
+		httpReq, err = http.NewRequest(http.MethodGet, modelsURL+"?key="+key, nil)
+	} else {
+		httpReq, err = http.NewRequest(http.MethodGet, modelsURL, nil)
+		if err == nil {
+			httpReq.Header.Set("Authorization", "Bearer "+key)
+		}
+	}
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to build request"})
+	}
+
+	resp, err := h.httpClient.Do(httpReq)
+	if err != nil {
+		return c.JSON(fiber.Map{"ok": false, "message": "Ulanib bo'lmadi: " + err.Error()})
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusOK {
+		return c.JSON(fiber.Map{"ok": true, "message": "Ulanish muvaffaqiyatli ✓"})
+	}
+
+	// Surface a short reason for common failures.
+	msg := fmt.Sprintf("Kalit ishlamadi (HTTP %d)", resp.StatusCode)
+	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+		msg = "Kalit noto'g'ri yoki ruxsat yo'q"
+	}
+	return c.JSON(fiber.Map{"ok": false, "message": msg})
+}
+
 // POST /api/ai/generate-questions
 func (h *AIHandler) GenerateQuestions(c *fiber.Ctx) error {
 	var req GenerateQuestionsRequest

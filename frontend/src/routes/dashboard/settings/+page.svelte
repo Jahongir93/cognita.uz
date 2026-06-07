@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { authStore } from '$lib/stores/auth';
-  import { settings as settingsApi } from '$lib/api/client';
+  import { settings as settingsApi, ai as aiApi } from '$lib/api/client';
 
   $: role = $authStore.user?.role ?? 'student';
   $: availableTabs = (role === 'admin'
@@ -44,13 +44,21 @@
   let securitySaving = false;
   let passError = '';
 
-  // API Keys
-  let openaiKey = '';
-  let geminiKey = '';
+  // API Keys — inputs stay empty (keys are stored masked server-side).
+  // We only send a key when the user actually types a new value.
+  type Provider = 'groq' | 'openai' | 'gemini';
+  const providers: {
+    id: Provider; name: string; logo: string; sub: string;
+    placeholder: string; hint: string; recommended?: boolean;
+  }[] = [
+    { id: 'groq',   name: 'Groq',          logo: '⚡', sub: 'llama-3.3-70b — tez va bepul', placeholder: 'gsk_...',  hint: 'gsk_... formatida', recommended: true },
+    { id: 'openai', name: 'OpenAI GPT-4',  logo: '🤖', sub: 'gpt-4o, gpt-4o-mini modellari', placeholder: 'sk-...',   hint: 'sk-... formatida' },
+    { id: 'gemini', name: 'Google Gemini', logo: '✨', sub: 'gemini-1.5-pro modeli',         placeholder: 'AIza...',  hint: 'AIza... formatida' },
+  ];
+  let keys: Record<Provider, string> = { groq: '', openai: '', gemini: '' };
+  let show: Record<Provider, boolean> = { groq: false, openai: false, gemini: false };
+  let configured: Record<Provider, boolean> = { groq: false, openai: false, gemini: false };
   let apiSaving = false;
-  let showOpenai = false;
-  let showGemini = false;
-  let apiCopied = '';
 
   // Appearance
   let theme: 'light' | 'dark' | 'auto' = 'light';
@@ -67,8 +75,11 @@
     }
     try {
       const all = await settingsApi.getAll();
-      openaiKey = all.find(s => s.key === 'openai_api_key')?.value ?? '';
-      geminiKey = all.find(s => s.key === 'gemini_api_key')?.value ?? '';
+      configured = {
+        groq:   !!all['groq_api_key'],
+        openai: !!all['openai_api_key'],
+        gemini: !!all['gemini_api_key'],
+      };
     } catch {}
     loading = false;
   });
@@ -117,25 +128,53 @@
     }
   }
 
+  // Test connection state per provider
+  let testing: Record<Provider, boolean> = { groq: false, openai: false, gemini: false };
+  let testResult: Record<Provider, { ok: boolean; message: string } | null> = {
+    groq: null, openai: null, gemini: null,
+  };
+
+  async function testConnection(p: Provider) {
+    testing[p] = true;
+    testResult[p] = null;
+    testing = testing;
+    try {
+      // Test the freshly typed key if present, otherwise the saved one.
+      const res = await aiApi.test(p, keys[p].trim() || undefined);
+      testResult[p] = res;
+    } catch (e: any) {
+      testResult[p] = { ok: false, message: e?.message ?? 'Xato yuz berdi' };
+    } finally {
+      testing[p] = false;
+      testing = testing;
+      testResult = testResult;
+    }
+  }
+
   async function saveApiKeys() {
     apiSaving = true;
     try {
-      await Promise.all([
-        settingsApi.set('openai_api_key', openaiKey),
-        settingsApi.set('gemini_api_key', geminiKey),
-      ]);
+      const ops: Promise<unknown>[] = [];
+      for (const p of providers) {
+        if (keys[p.id].trim()) ops.push(settingsApi.set(`${p.id}_api_key`, keys[p.id].trim()));
+      }
+      if (ops.length === 0) {
+        showToast('Yangi kalit kiritilmadi', 'error');
+        return;
+      }
+      await Promise.all(ops);
+      // Mark saved providers as configured and clear the inputs.
+      for (const p of providers) {
+        if (keys[p.id].trim()) { configured[p.id] = true; keys[p.id] = ''; }
+      }
+      configured = configured;
+      keys = keys;
       showToast('API kalitlar saqlandi');
     } catch (e: any) {
       showToast(e.message ?? 'Xato', 'error');
     } finally {
       apiSaving = false;
     }
-  }
-
-  async function copyKey(val: string, id: string) {
-    await navigator.clipboard.writeText(val);
-    apiCopied = id;
-    setTimeout(() => (apiCopied = ''), 2000);
   }
 
   function showToast(msg: string, type: 'success' | 'error' = 'success') {
@@ -402,121 +441,66 @@
               <p>AI yordamida savollar yaratish uchun API kalitlarni kiriting</p>
             </div>
             <div class="card-body">
-              <!-- OpenAI -->
-              <div class="api-row">
-                <div class="api-row-top">
-                  <div class="api-logo">🤖</div>
-                  <div class="api-info">
-                    <div class="api-title">OpenAI GPT-4</div>
-                    <div class="api-subtitle">gpt-4o, gpt-4o-mini modellari</div>
-                  </div>
-                  <div class="api-status">
-                    {#if openaiKey}
-                      <span class="badge-green">Sozlangan ✓</span>
-                    {:else}
-                      <span class="badge-gray">Sozlanmagan</span>
-                    {/if}
-                  </div>
-                </div>
-                <div class="api-input-wrap">
-                  <div class="api-field-wrap">
-                    {#if showOpenai}
-                      <input
-                        type="text"
-                        class="form-input api-input"
-                        bind:value={openaiKey}
-                        placeholder="sk-..."
-                        autocomplete="off"
-                        spellcheck="false"
-                      />
-                    {:else}
-                      <input
-                        type="password"
-                        class="form-input api-input"
-                        bind:value={openaiKey}
-                        placeholder="sk-..."
-                        autocomplete="off"
-                        spellcheck="false"
-                      />
-                    {/if}
-                    <div class="api-btn-group">
-                      <button type="button" class="api-icon-btn" title={showOpenai ? 'Yashirish' : "Ko'rsatish"} on:click={() => (showOpenai = !showOpenai)}>
-                        {showOpenai ? '🙈' : '👁️'}
-                      </button>
-                      <button
-                        type="button"
-                        class="api-icon-btn"
-                        class:copied={apiCopied === 'openai'}
-                        title="Nusxa olish"
-                        disabled={!openaiKey}
-                        on:click={() => copyKey(openaiKey, 'openai')}
-                      >
-                        {apiCopied === 'openai' ? '✓' : '📋'}
-                      </button>
+              {#each providers as p, i (p.id)}
+                <div class="api-row">
+                  <div class="api-row-top">
+                    <div class="api-logo">{p.logo}</div>
+                    <div class="api-info">
+                      <div class="api-title">
+                        {p.name}
+                        {#if p.recommended}<span class="rec-tag">Tavsiya</span>{/if}
+                      </div>
+                      <div class="api-subtitle">{p.sub}</div>
+                    </div>
+                    <div class="api-status">
+                      {#if configured[p.id]}
+                        <span class="badge-green">Sozlangan ✓</span>
+                      {:else}
+                        <span class="badge-gray">Sozlanmagan</span>
+                      {/if}
                     </div>
                   </div>
-                  <span class="api-helper">sk-... formatida</span>
-                </div>
-              </div>
-
-              <div class="api-divider"></div>
-
-              <!-- Gemini -->
-              <div class="api-row">
-                <div class="api-row-top">
-                  <div class="api-logo">✨</div>
-                  <div class="api-info">
-                    <div class="api-title">Google Gemini</div>
-                    <div class="api-subtitle">gemini-1.5-pro modeli</div>
-                  </div>
-                  <div class="api-status">
-                    {#if geminiKey}
-                      <span class="badge-green">Sozlangan ✓</span>
-                    {:else}
-                      <span class="badge-gray">Sozlanmagan</span>
-                    {/if}
-                  </div>
-                </div>
-                <div class="api-input-wrap">
-                  <div class="api-field-wrap">
-                    {#if showGemini}
-                      <input
-                        type="text"
-                        class="form-input api-input"
-                        bind:value={geminiKey}
-                        placeholder="AIza..."
-                        autocomplete="off"
-                        spellcheck="false"
-                      />
-                    {:else}
-                      <input
-                        type="password"
-                        class="form-input api-input"
-                        bind:value={geminiKey}
-                        placeholder="AIza..."
-                        autocomplete="off"
-                        spellcheck="false"
-                      />
-                    {/if}
-                    <div class="api-btn-group">
-                      <button type="button" class="api-icon-btn" title={showGemini ? 'Yashirish' : "Ko'rsatish"} on:click={() => (showGemini = !showGemini)}>
-                        {showGemini ? '🙈' : '👁️'}
-                      </button>
+                  <div class="api-input-wrap">
+                    <div class="api-field-wrap">
+                      {#if show[p.id]}
+                        <input type="text" class="form-input api-input" bind:value={keys[p.id]} placeholder={p.placeholder} autocomplete="off" spellcheck="false" />
+                      {:else}
+                        <input type="password" class="form-input api-input" bind:value={keys[p.id]} placeholder={p.placeholder} autocomplete="off" spellcheck="false" />
+                      {/if}
+                      <div class="api-btn-group">
+                        <button type="button" class="api-icon-btn" title={show[p.id] ? 'Yashirish' : "Ko'rsatish"} on:click={() => (show[p.id] = !show[p.id])}>
+                          {show[p.id] ? '🙈' : '👁️'}
+                        </button>
+                      </div>
+                    </div>
+                    <div class="api-row-bottom">
+                      <span class="api-helper">{p.hint}</span>
                       <button
                         type="button"
-                        class="api-icon-btn"
-                        class:copied={apiCopied === 'gemini'}
-                        title="Nusxa olish"
-                        disabled={!geminiKey}
-                        on:click={() => copyKey(geminiKey, 'gemini')}
+                        class="btn-test"
+                        on:click={() => testConnection(p.id)}
+                        disabled={testing[p.id] || (!keys[p.id].trim() && !configured[p.id])}
+                        title="Aloqa signalini tekshirish"
                       >
-                        {apiCopied === 'gemini' ? '✓' : '📋'}
+                        {#if testing[p.id]}
+                          <span class="spinner-sm"></span> Tekshirilmoqda...
+                        {:else}
+                          📡 Tekshirish
+                        {/if}
                       </button>
                     </div>
+                    {#if testResult[p.id]}
+                      <div class="test-result" class:ok={testResult[p.id]?.ok} class:fail={!testResult[p.id]?.ok}>
+                        <span>{testResult[p.id]?.ok ? '🟢' : '🔴'}</span>
+                        {testResult[p.id]?.message}
+                      </div>
+                    {/if}
                   </div>
-                  <span class="api-helper">AIza... formatida</span>
                 </div>
-              </div>
+                {#if i < providers.length - 1}
+                  <div class="api-divider"></div>
+                {/if}
+              {/each}
 
               <div class="form-footer">
                 <button class="btn-primary" on:click={saveApiKeys} disabled={apiSaving}>
@@ -1219,6 +1203,85 @@
     height: 1px;
     background: var(--border);
     margin: 4px 0;
+  }
+
+  .rec-tag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 99px;
+    font-size: 0.66rem;
+    font-weight: 700;
+    background: #dcfce7;
+    color: #16a34a;
+    vertical-align: middle;
+  }
+
+  .api-row-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .btn-test {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--white);
+    color: var(--text2);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+  }
+
+  .btn-test:hover:not(:disabled) {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  .btn-test:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .spinner-sm {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(99, 102, 241, 0.3);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.65s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .test-result {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .test-result.ok {
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
+  }
+
+  .test-result.fail {
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
   }
 
   /* ── Appearance ── */

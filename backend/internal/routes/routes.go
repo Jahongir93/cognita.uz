@@ -62,6 +62,7 @@ func Setup(app *fiber.App, db *pgxpool.Pool, hub *ws.Hub) {
 
 	// ── AI ────────────────────────────────────────────────────────────────────
 	api.Post("/ai/generate-questions", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin), aiH.GenerateQuestions)
+	api.Post("/ai/test", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin), aiH.TestConnection)
 
 
 	// ── Exams & Olympiads ─────────────────────────────────────────────────────

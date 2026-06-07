@@ -154,6 +154,14 @@ export const ai = {
         request<AIGeneratedQuestion[]>('/api/ai/generate-questions', {
             method: 'POST',
             body: JSON.stringify(data)
+        }),
+
+    // Checks whether a provider key is valid / reachable. Pass `key` to test a
+    // freshly typed (unsaved) key, or omit it to test the stored one.
+    test: (provider: 'groq' | 'openai' | 'gemini', key?: string) =>
+        request<{ ok: boolean; message: string }>('/api/ai/test', {
+            method: 'POST',
+            body: JSON.stringify({ provider, key: key ?? '' })
         })
 };
 
@@ -166,8 +174,10 @@ export interface AppSetting {
 }
 
 export const settings = {
+    // Backend returns an object map: { "groq_api_key": "****abcd", ... }
+    // API key values come back masked (only last 4 chars).
     getAll: () =>
-        request<AppSetting[]>('/api/settings'),
+        request<Record<string, string>>('/api/settings'),
 
     set: (key: string, value: string) =>
         request('/api/settings', { method: 'PUT', body: JSON.stringify({ key, value }) })
