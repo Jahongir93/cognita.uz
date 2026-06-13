@@ -62,8 +62,9 @@
 
     // ── Game modes ────────────────────────────────────────────────────────────
     const modes = [
-        { value: 'classic',  icon: '🎯',   label: 'Klassik',  desc: 'Tezlik + to\'g\'rilik' },
-        { value: 'team',     icon: '👥',   label: 'Jamoa',    desc: 'Jamoa bo\'lib o\'ynash' },
+        { value: 'classic',    icon: '🎯',   label: 'Klassik',  desc: 'Savol ekranda, tezlik' },
+        { value: 'self_paced', icon: '📲', label: 'Mustaqil', desc: 'Har kim o\'z qurilmasida' },
+        { value: 'team',       icon: '👥',   label: 'Jamoaviy', desc: 'Jamoalarga bo\'linib' },
         { value: 'accuracy', icon: '💯', label: 'Aniqlik',  desc: 'Faqat to\'g\'ri javob' },
         { value: 'speed',    icon: '⚡',   label: 'Tezlik',   desc: 'Eng tez javob g\'alaba' },
     ];

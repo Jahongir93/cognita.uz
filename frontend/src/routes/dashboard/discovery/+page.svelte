@@ -134,7 +134,8 @@
 
     const modes = [
         { value: 'classic',     icon: '⚡', label: 'Classic',  color: '#f59e0b' },
-        { value: 'team',        icon: '👥', label: 'Jamoa',    color: '#3b82f6' },
+        { value: 'self_paced',  icon: '📲', label: 'Mustaqil', color: '#06b6d4' },
+        { value: 'team',        icon: '👥', label: 'Jamoaviy', color: '#3b82f6' },
         { value: 'accuracy',    icon: '🎯', label: 'Aniqlik',  color: '#22c55e' },
         { value: 'confidence',  icon: '💡', label: 'Ishonch',  color: '#8b5cf6' },
         { value: 'zero_stakes', icon: '🌟', label: 'Mashq',    color: '#64748b' },

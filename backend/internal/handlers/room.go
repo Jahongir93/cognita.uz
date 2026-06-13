@@ -377,6 +377,14 @@ func (r *gameRepo) UpdateParticipantScore(ctx context.Context, participantID uui
 	return err
 }
 
+func (r *gameRepo) UpdateParticipantTeam(ctx context.Context, participantID uuid.UUID, teamID int) error {
+	_, err := r.db.Exec(ctx,
+		`UPDATE room_participants SET team_id=$1 WHERE id=$2`,
+		teamID, participantID,
+	)
+	return err
+}
+
 func (r *gameRepo) UpdateRoomStatus(ctx context.Context, roomID uuid.UUID, status models.RoomStatus) error {
 	extra := ""
 	if status == models.RoomInProgress {

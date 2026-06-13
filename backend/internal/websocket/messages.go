@@ -41,6 +41,9 @@ const (
 	MsgEmojiReaction  = "emoji_reaction"  // barcha ko'radigan emoji
 	MsgYourInfo       = "your_info"       // student: o'z participant_id si
 	MsgError          = "error"           // xato xabari
+
+	// Self-paced / team rejimi uchun
+	MsgSelfPacedProgress = "self_paced_progress" // host: har talabaning jonli progressi
 )
 
 // ─── Base Message ────────────────────────────────────────────────────────────
@@ -166,11 +169,39 @@ type LeaderboardEntry struct {
 	Score    int    `json:"score"`
 	Streak   int    `json:"streak"`
 	Delta    int    `json:"delta"` // rank change from previous question
+	TeamID   *int   `json:"team_id,omitempty"`
 }
 
 type GameOverPayload struct {
 	Leaderboard []LeaderboardEntry `json:"leaderboard"`
 	Stats       GameStats          `json:"stats"`
+	Teams       []TeamStanding     `json:"teams,omitempty"` // faqat jamoa rejimida
+}
+
+type TeamStanding struct {
+	TeamID  int    `json:"team_id"`
+	Name    string `json:"name"`
+	Score   int    `json:"score"`
+	Rank    int    `json:"rank"`
+	Members int    `json:"members"`
+}
+
+// ─── Self-paced / team rejimi payloadlari ───────────────────────────────────
+
+type SelfPacedProgressPayload struct {
+	Players []SelfPacedPlayerProgress `json:"players"`
+	Teams   []TeamStanding            `json:"teams,omitempty"`
+}
+
+type SelfPacedPlayerProgress struct {
+	ID       string `json:"id"`
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	TeamID   *int   `json:"team_id,omitempty"`
+	Answered int    `json:"answered"`
+	Total    int    `json:"total"`
+	Score    int    `json:"score"`
+	Finished bool   `json:"finished"`
 }
 
 type GameStats struct {

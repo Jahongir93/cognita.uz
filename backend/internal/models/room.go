@@ -21,6 +21,7 @@ type GameMode string
 
 const (
 	ModeClassic    GameMode = "classic"
+	ModeSelfPaced  GameMode = "self_paced"
 	ModeTeam       GameMode = "team"
 	ModeAccuracy   GameMode = "accuracy"
 	ModeConfidence GameMode = "confidence"

@@ -51,12 +51,16 @@ type GameEngine struct {
 	currentQuestionIdx int
 	cancelTimer        context.CancelFunc
 	answerLock         sync.Mutex
+
+	// Self-paced / team rejimi holati (answerLock bilan himoyalangan)
+	sp *selfPacedState
 }
 
 // GameRepository abstracts DB writes (answers, scores)
 type GameRepository interface {
 	SaveGameAnswer(ctx context.Context, answer *models.GameAnswer) error
 	UpdateParticipantScore(ctx context.Context, participantID uuid.UUID, score, streak int) error
+	UpdateParticipantTeam(ctx context.Context, participantID uuid.UUID, teamID int) error
 	UpdateRoomStatus(ctx context.Context, roomID uuid.UUID, status models.RoomStatus) error
 	FinalizeRoom(ctx context.Context, roomID uuid.UUID) error
 }
@@ -71,6 +75,10 @@ func NewGameEngine(db GameRepository) *GameEngine {
 // ─── State Machine ───────────────────────────────────────────────────────────
 
 func (e *GameEngine) Start(room *ws.GameRoom) {
+	if isSelfPaced(room.GameMode) {
+		e.startSelfPaced(room)
+		return
+	}
 	room.Log("Game starting, mode=%s, questions=%d", room.GameMode, len(room.Quiz.Questions))
 
 	// Initialize participant states
@@ -92,6 +100,10 @@ func (e *GameEngine) Start(room *ws.GameRoom) {
 }
 
 func (e *GameEngine) NextQuestion(room *ws.GameRoom) {
+	// Self-paced rejimida o'qituvchi savolni boshqarmaydi — har talaba o'zi o'tadi.
+	if isSelfPaced(room.GameMode) {
+		return
+	}
 	// Find current index from quiz state
 	nextIdx := e.currentQuestionIndex(room) + 1
 	if nextIdx >= len(room.Quiz.Questions) {
@@ -129,10 +141,14 @@ func (e *GameEngine) End(room *ws.GameRoom) {
 	e.DB.FinalizeRoom(context.Background(), room.RoomID)
 
 	leaderboard := e.buildLeaderboard(room)
-	room.Broadcast(ws.NewMessage(ws.MsgGameOver, ws.GameOverPayload{
+	gameOver := ws.GameOverPayload{
 		Leaderboard: leaderboard,
 		Stats:       e.buildGameStats(room),
-	}))
+	}
+	if room.GameMode == models.ModeTeam {
+		gameOver.Teams = e.buildTeamStandings(room)
+	}
+	room.Broadcast(ws.NewMessage(ws.MsgGameOver, gameOver))
 	room.Log("Game ended")
 }
 
@@ -356,6 +372,10 @@ func (e *GameEngine) processAnswerLocked(room *ws.GameRoom, participantID uuid.U
 }
 
 func (e *GameEngine) HandleAnswer(room *ws.GameRoom, participantID uuid.UUID, payload ws.SubmitAnswerPayload) {
+	if isSelfPaced(room.GameMode) {
+		e.handleSelfPacedAnswer(room, participantID, payload)
+		return
+	}
 	out, ok := e.processAnswerLocked(room, participantID, payload)
 	if !ok {
 		return

@@ -3,7 +3,7 @@
 export type UserRole = 'admin' | 'teacher' | 'student';
 export type QuestionType = 'multiple_choice' | 'true_false' | 'short_answer' | 'poll' | 'image_choice' | 'audio' | 'draw' | 'reorder' | 'fill_blank';
 export type ActivityTemplate = 'quiz' | 'match_up' | 'wordsearch' | 'crossword' | 'maze_chase' | 'group_sort' | 'type_answer' | 'labelled_diagram' | 'flashcards';
-export type GameMode = 'classic' | 'team' | 'accuracy' | 'confidence' | 'zero_stakes';
+export type GameMode = 'classic' | 'self_paced' | 'team' | 'accuracy' | 'confidence' | 'zero_stakes';
 export type RoomStatus = 'waiting' | 'in_progress' | 'paused' | 'completed' | 'abandoned';
 
 // ─── Auth ─────────────────────────────────────────────────────────────────────
@@ -101,6 +101,31 @@ export interface LeaderboardEntry {
     score: number;
     streak: number;
     delta: number; // rank change
+    team_id?: number;
+}
+
+export interface TeamStanding {
+    team_id: number;
+    name: string;
+    score: number;
+    rank: number;
+    members: number;
+}
+
+export interface SelfPacedPlayerProgress {
+    id: string;
+    nickname: string;
+    avatar: string;
+    team_id?: number;
+    answered: number;
+    total: number;
+    score: number;
+    finished: boolean;
+}
+
+export interface SelfPacedProgressPayload {
+    players: SelfPacedPlayerProgress[];
+    teams?: TeamStanding[];
 }
 
 // ─── WebSocket Message Types ──────────────────────────────────────────────────
@@ -163,4 +188,5 @@ export interface GameOverPayload {
         average_accuracy: number;
         duration_sec: number;
     };
+    teams?: TeamStanding[];
 }

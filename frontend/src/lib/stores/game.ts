@@ -1,7 +1,8 @@
 import { writable, derived } from 'svelte/store';
 import type {
     Player, LeaderboardEntry, QuestionPayload,
-    AnswerResultPayload, RoomStatePayload, GameOverPayload
+    AnswerResultPayload, RoomStatePayload, GameOverPayload,
+    GameMode, SelfPacedPlayerProgress, TeamStanding, SelfPacedProgressPayload
 } from '$lib/api/types';
 
 export type GamePhase =
@@ -32,6 +33,9 @@ interface GameState {
     myAvatar: string;
     answeredCount: number;
     totalCount: number;
+    gameMode: GameMode | '';
+    selfPacedProgress: SelfPacedPlayerProgress[];
+    teamStandings: TeamStanding[];
 }
 
 const initial: GameState = {
@@ -52,6 +56,9 @@ const initial: GameState = {
     myAvatar: '',
     answeredCount: 0,
     totalCount: 0,
+    gameMode: '',
+    selfPacedProgress: [],
+    teamStandings: [],
 };
 
 function createGameStore() {
@@ -71,7 +78,16 @@ function createGameStore() {
                 players: payload.players,
                 totalQuestions: payload.total_questions,
                 totalCount: payload.players.filter(p => p.is_active).length,
+                gameMode: payload.game_mode ?? s.gameMode,
                 phase: payload.status === 'waiting' ? 'lobby' : s.phase
+            }));
+        },
+
+        applySelfPacedProgress(payload: SelfPacedProgressPayload) {
+            update(s => ({
+                ...s,
+                selfPacedProgress: payload.players,
+                teamStandings: payload.teams ?? s.teamStandings,
             }));
         },
 
@@ -144,7 +160,8 @@ function createGameStore() {
                 ...s,
                 phase: 'game_over',
                 finalResult: payload,
-                leaderboard: payload.leaderboard
+                leaderboard: payload.leaderboard,
+                teamStandings: payload.teams ?? s.teamStandings,
             }));
         },
 

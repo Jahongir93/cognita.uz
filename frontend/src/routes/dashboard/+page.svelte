@@ -88,7 +88,8 @@
   // ── Mode badge colours ─────────────────────────────────────────────────────
   const modeMeta: Record<string, { label: string; color: string; bg: string }> = {
     classic:     { label: 'Classic',  color: '#92400e', bg: '#fef3c7' },
-    team:        { label: 'Jamoa',    color: '#1e3a8a', bg: '#dbeafe' },
+    self_paced:  { label: 'Mustaqil', color: '#155e75', bg: '#cffafe' },
+    team:        { label: 'Jamoaviy', color: '#1e3a8a', bg: '#dbeafe' },
     accuracy:    { label: 'Aniqlik', color: '#14532d', bg: '#dcfce7' },
     confidence:  { label: 'Ishonch', color: '#4c1d95', bg: '#ede9fe' },
     zero_stakes: { label: 'Mashq',   color: '#374151', bg: '#f3f4f6' },

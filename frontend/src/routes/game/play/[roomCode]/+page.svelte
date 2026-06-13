@@ -16,6 +16,33 @@
     $: phase = $gameStore.phase;
     $: question = $gameStore.currentQuestion;
     $: result = $gameStore.myResult;
+    $: isSelfPaced = $gameStore.gameMode === 'self_paced' || $gameStore.gameMode === 'team';
+
+    // Self-paced rejimida vaqtni mijoz hisoblaydi (server timer yubormaydi).
+    let clientTimer: ReturnType<typeof setInterval> | null = null;
+    function stopClientTimer() {
+        if (clientTimer) { clearInterval(clientTimer); clientTimer = null; }
+    }
+    function startClientTimer() {
+        stopClientTimer();
+        if (!question) return;
+        clientTimer = setInterval(() => {
+            const left = $gameStore.secondsLeft - 1;
+            gameStore.setTimer(Math.max(0, left));
+            if (left <= 0) {
+                stopClientTimer();
+                if (!$gameStore.myAnswer) timeoutSubmit();
+            }
+        }, 1000);
+    }
+    function timeoutSubmit() {
+        if (!question || $gameStore.myAnswer) return;
+        socket.send('submit_answer', {
+            question_id: question.question_id,
+            response_time_ms: question.time_limit * 1000,
+        });
+        gameStore.submitAnswer('__timeout__');
+    }
 
     const optConfig = [
         { shape: '▲', color: '#e21b3c' },
@@ -46,9 +73,10 @@
             resultVisible = false;
             textInput = '';
             gameStore.showQuestion(m.payload);
+            if (isSelfPaced) startClientTimer();
         });
         socket.on('timer',        (m) => gameStore.setTimer(m.payload.seconds_left));
-        socket.on('answer_result',(m) => gameStore.applyAnswerResult(m.payload));
+        socket.on('answer_result',(m) => { gameStore.applyAnswerResult(m.payload); resultVisible = true; });
         socket.on('question_end', (m: { payload: QuestionEndPayload }) => {
             correctIds = m.payload.correct_options;
             gameStore.showQuestionEnd();
@@ -71,7 +99,7 @@
         }, 500);
     });
 
-    onDestroy(() => { socket?.disconnect(); gameStore.reset(); });
+    onDestroy(() => { stopClientTimer(); socket?.disconnect(); gameStore.reset(); });
 
     function submitOption(id: string) {
         if (!question || $gameStore.myAnswer) return;
@@ -81,6 +109,7 @@
             response_time_ms: (question.time_limit - $gameStore.secondsLeft) * 1000
         });
         gameStore.submitAnswer(id);
+        stopClientTimer();
     }
 
     function submitText() {
@@ -91,6 +120,7 @@
             response_time_ms: (question.time_limit - $gameStore.secondsLeft) * 1000
         });
         gameStore.submitAnswer(textInput.trim());
+        stopClientTimer();
     }
 
     function sendEmoji(e: string) { socket.send('send_emoji', { emoji: e }); }
@@ -150,10 +180,14 @@
             </div>
 
             <div class="q-body">
-                {#if question?.media_url}
-                    <img src={question.media_url} alt="" class="q-media" />
+                {#if isSelfPaced}
+                    {#if question?.media_url}
+                        <img src={question.media_url} alt="" class="q-media" />
+                    {/if}
+                    <p class="q-text">{question?.question_text ?? ''}</p>
+                {:else}
+                    <p class="q-text q-look">👆 Savolni ekrandan o'qing</p>
                 {/if}
-                <p class="q-text">{question?.question_text ?? ''}</p>
             </div>
 
             {#if question?.type === 'multiple_choice' || question?.type === 'true_false' || question?.type === 'image_choice'}
@@ -210,10 +244,20 @@
             {/if}
 
             {#if phase === 'answered'}
-                <div class="waiting-pill">
-                    <span class="dot-spin"></span>
-                    Boshqalarni kutmoqda...
-                </div>
+                {#if isSelfPaced && result}
+                    <div class="sp-feedback" class:correct={result.is_correct} class:wrong={!result.is_correct}>
+                        <span class="sp-fb-icon">{result.is_correct ? '✅' : '❌'}</span>
+                        <span class="sp-fb-text">
+                            {result.is_correct ? `+${result.points_earned} ball` : "Noto'g'ri"}
+                        </span>
+                        <span class="sp-fb-next">Keyingi savol...</span>
+                    </div>
+                {:else}
+                    <div class="waiting-pill">
+                        <span class="dot-spin"></span>
+                        Boshqalarni kutmoqda...
+                    </div>
+                {/if}
             {/if}
 
             <div class="emoji-bar">
@@ -558,6 +602,27 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Self-paced (Mustaqil) rejimi uchun */
+    .q-look {
+        opacity: 0.7;
+        font-style: italic;
+        text-align: center;
+    }
+    .sp-feedback {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 14px;
+        border-radius: 16px;
+        animation: fadeIn 0.25s ease;
+    }
+    .sp-feedback.correct { background: rgba(34,197,94,0.15); }
+    .sp-feedback.wrong   { background: rgba(239,68,68,0.15); }
+    .sp-fb-icon { font-size: 2rem; }
+    .sp-fb-text { font-size: 1.1rem; font-weight: 800; color: #e2e8f0; }
+    .sp-fb-next { font-size: 0.8rem; color: #94a3b8; }
 
     .emoji-bar {
         display: flex;

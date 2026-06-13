@@ -112,7 +112,7 @@
         return map[s] ?? s;
     }
     function modeLabel(m: string) {
-        const map: Record<string, string> = { classic: '⚡ Classic', team: '👥 Jamoa', accuracy: '🎯 Aniqlik', confidence: '💡 Ishonch', zero_stakes: '🌟 Mashq' };
+        const map: Record<string, string> = { classic: '⚡ Classic', self_paced: '📲 Mustaqil', team: '👥 Jamoaviy', accuracy: '🎯 Aniqlik', confidence: '💡 Ishonch', zero_stakes: '🌟 Mashq' };
         return map[m] ?? m;
     }
     function accuracy(p: PlayerResult) {

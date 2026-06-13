@@ -19,7 +19,7 @@ CREATE TYPE activity_template AS ENUM (
     'maze_chase', 'group_sort', 'type_answer',
     'labelled_diagram', 'flashcards', 'spin_wheel'
 );
-CREATE TYPE game_mode AS ENUM ('classic', 'team', 'accuracy', 'confidence', 'zero_stakes');
+CREATE TYPE game_mode AS ENUM ('classic', 'self_paced', 'team', 'accuracy', 'confidence', 'zero_stakes');
 CREATE TYPE room_status AS ENUM ('waiting', 'in_progress', 'paused', 'completed', 'abandoned');
 CREATE TYPE assignment_status AS ENUM ('draft', 'active', 'closed');
 

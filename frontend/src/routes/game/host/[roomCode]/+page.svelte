@@ -15,6 +15,10 @@
     $: phase = $gameStore.phase;
     $: question = $gameStore.currentQuestion;
     $: activePlayers = $gameStore.players.filter(p => p.is_active);
+    $: isSelfPaced = $gameStore.gameMode === 'self_paced' || $gameStore.gameMode === 'team';
+    $: spProgress = $gameStore.selfPacedProgress;
+    $: teamStandings = $gameStore.teamStandings;
+    let monitoring = false;
     $: answerPct = $gameStore.totalCount > 0
         ? Math.round(($gameStore.answeredCount / $gameStore.totalCount) * 100)
         : 0;
@@ -36,7 +40,8 @@
         socket.on('room_state',   (m) => gameStore.applyRoomState(m.payload));
         socket.on('player_joined',(m) => gameStore.playerJoined(m.payload.player));
         socket.on('player_left',  (m) => gameStore.playerLeft(m.payload.id));
-        socket.on('game_started', () => {});
+        socket.on('game_started', () => { if (isSelfPaced) monitoring = true; });
+        socket.on('self_paced_progress', (m) => gameStore.applySelfPacedProgress(m.payload));
         socket.on('question', (m) => {
             correctIds = [];
             questionStats = null;
@@ -106,8 +111,50 @@
 
     <main class="main">
 
+        <!-- ═══ SELF-PACED / TEAM MONITORING ════════════════════════════════ -->
+        {#if monitoring && phase !== 'game_over'}
+            <div class="monitor">
+                <div class="mon-head">
+                    <h2 class="mon-title">{$gameStore.gameMode === 'team' ? '👥 Jamoaviy rejim' : '🎯 Mustaqil rejim'} — jonli natijalar</h2>
+                    <p class="mon-sub">O'quvchilar o'z tezligida yechmoqda</p>
+                </div>
+
+                {#if $gameStore.gameMode === 'team' && teamStandings.length}
+                    <div class="team-board">
+                        {#each teamStandings as t (t.team_id)}
+                            <div class="team-card">
+                                <span class="team-rank">{rankEmoji(t.rank)}</span>
+                                <span class="team-name">{t.name}</span>
+                                <span class="team-members">{t.members} a'zo</span>
+                                <span class="team-score">{t.score.toLocaleString()}</span>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+
+                <div class="mon-list">
+                    {#each spProgress as p (p.id)}
+                        <div class="mon-row" class:done={p.finished}>
+                            <span class="mon-av">{p.avatar}</span>
+                            <span class="mon-nick">
+                                {p.nickname}
+                                {#if p.team_id}<span class="mon-team">J{p.team_id}</span>{/if}
+                            </span>
+                            <div class="mon-bar">
+                                <div class="mon-bar-fill" style="width:{p.total ? (p.answered / p.total) * 100 : 0}%"></div>
+                            </div>
+                            <span class="mon-count">{p.answered}/{p.total}</span>
+                            <span class="mon-score">{p.score.toLocaleString()}</span>
+                            {#if p.finished}<span class="mon-done">✓</span>{/if}
+                        </div>
+                    {:else}
+                        <p class="mon-empty">Hali natija yo'q...</p>
+                    {/each}
+                </div>
+            </div>
+
         <!-- ═══ LOBBY ══════════════════════════════════════════════════════ -->
-        {#if phase === 'lobby' || phase === 'idle'}
+        {:else if phase === 'lobby' || phase === 'idle'}
             <div class="lobby">
                 <div class="lob-quiz">
                     <p class="lob-title">{$gameStore.roomInfo?.quiz_title ?? 'Yuklanmoqda...'}</p>
@@ -347,6 +394,19 @@
                     </div>
                 {/if}
 
+                {#if teamStandings.length}
+                    <div class="team-board final">
+                        {#each teamStandings as t (t.team_id)}
+                            <div class="team-card">
+                                <span class="team-rank">{rankEmoji(t.rank)}</span>
+                                <span class="team-name">{t.name}</span>
+                                <span class="team-members">{t.members} a'zo</span>
+                                <span class="team-score">{t.score.toLocaleString()}</span>
+                            </div>
+                        {/each}
+                    </div>
+                {/if}
+
                 <div class="lb-list">
                     {#each $gameStore.leaderboard.slice(0, 30) as e, i}
                         <div class="lb-row" style="animation-delay:{i * 40}ms">
@@ -551,4 +611,41 @@
     .btn:not(:disabled):hover { opacity: 0.87; }
     .btn:not(:disabled):active { transform: scale(0.97); }
     .dash-link { text-decoration: none; display: inline-block; }
+
+    /* ── Self-paced / team monitoring ── */
+    .monitor { width: 100%; max-width: 760px; margin: 0 auto; }
+    .mon-head { text-align: center; margin-bottom: 20px; }
+    .mon-title { font-size: 1.4rem; font-weight: 800; color: #f1f5f9; margin: 0; }
+    .mon-sub { color: #94a3b8; font-size: 0.9rem; margin-top: 4px; }
+    .mon-list { display: flex; flex-direction: column; gap: 8px; }
+    .mon-row {
+        display: flex; align-items: center; gap: 12px;
+        background: #1e293b; border: 1px solid #334155;
+        border-radius: 12px; padding: 10px 14px;
+        animation: fadeIn 0.3s ease;
+    }
+    .mon-row.done { border-color: #22c55e; background: rgba(34,197,94,0.08); }
+    .mon-av { font-size: 1.5rem; }
+    .mon-nick { font-weight: 700; color: #e2e8f0; min-width: 120px; display: flex; align-items: center; gap: 6px; }
+    .mon-team { font-size: 0.65rem; background: #6366f1; color: #fff; padding: 1px 6px; border-radius: 99px; }
+    .mon-bar { flex: 1; height: 8px; background: #334155; border-radius: 99px; overflow: hidden; }
+    .mon-bar-fill { height: 100%; background: linear-gradient(90deg,#6366f1,#22c55e); transition: width 0.4s ease; }
+    .mon-count { font-size: 0.82rem; color: #94a3b8; min-width: 42px; text-align: right; }
+    .mon-score { font-weight: 800; color: #fbbf24; min-width: 64px; text-align: right; }
+    .mon-done { color: #22c55e; font-weight: 800; }
+    .mon-empty { text-align: center; color: #64748b; padding: 30px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    /* ── Team standings ── */
+    .team-board { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+    .team-board.final { max-width: 520px; margin: 0 auto 20px; }
+    .team-card {
+        display: flex; align-items: center; gap: 12px;
+        background: #1e293b; border: 1px solid #334155;
+        border-radius: 12px; padding: 12px 16px;
+    }
+    .team-rank { font-size: 1.2rem; min-width: 34px; }
+    .team-name { font-weight: 800; color: #f1f5f9; flex: 1; }
+    .team-members { font-size: 0.78rem; color: #94a3b8; }
+    .team-score { font-weight: 800; color: #fbbf24; min-width: 70px; text-align: right; }
 </style>
