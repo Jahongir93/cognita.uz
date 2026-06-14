@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { sfx, confetti } from '$lib/boardFx';
     export let content: any;
     const statements: { text: string; answer: boolean }[] = content?.statements ?? [];
 
@@ -14,11 +15,11 @@
         if (revealed) return;
         picked = val;
         revealed = true;
-        if (val === s.answer) score++;
+        if (val === s.answer) { score++; sfx('correct'); } else { sfx('wrong'); }
     }
     function next() {
         if (idx < statements.length - 1) { idx++; picked = null; revealed = false; }
-        else finished = true;
+        else { finished = true; sfx('win'); confetti(); }
     }
     function restart() { idx = 0; picked = null; revealed = false; score = 0; finished = false; }
 </script>

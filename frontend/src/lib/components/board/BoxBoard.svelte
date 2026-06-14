@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { sfx } from '$lib/boardFx';
     export let content: any;
     const prompts: string[] = content?.prompts ?? [];
 
@@ -8,6 +9,7 @@
     function open(i: number) {
         active = i;
         opened[i] = true; opened = opened;
+        sfx('open');
     }
     function close() { active = null; }
     function reset() { opened = prompts.map(() => false); active = null; }

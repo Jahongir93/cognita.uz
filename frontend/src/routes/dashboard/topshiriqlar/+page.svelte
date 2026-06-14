@@ -2,9 +2,10 @@
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { ACTIVITY_MODULES, getModule } from '$lib/data/activityModules';
-    import { activityStore, type Activity } from '$lib/stores/activities';
+    import { activitiesApi, type BoardActivity } from '$lib/api/client';
 
-    let myActivities: Activity[] = [];
+    let myActivities: BoardActivity[] = [];
+    let loading = true;
     let activeCat: string = 'Hammasi';
 
     const categories = ['Hammasi', 'Savol-javob', 'Moslashtirish', "So'z", 'Saralash', 'Tasodif', 'Harakatli'];
@@ -13,21 +14,24 @@
         ? ACTIVITY_MODULES
         : ACTIVITY_MODULES.filter(m => m.category === activeCat);
 
-    function reload() { myActivities = activityStore.list(); }
+    async function reload() {
+        try { myActivities = await activitiesApi.list(); } catch { myActivities = []; }
+        loading = false;
+    }
     onMount(reload);
 
     function createNew(type: string) {
         goto(`/dashboard/topshiriqlar/yaratish/${type}`);
     }
-    function play(a: Activity) {
+    function play(a: BoardActivity) {
         window.open(`/board/${a.id}`, '_blank');
     }
-    function edit(a: Activity) {
+    function edit(a: BoardActivity) {
         goto(`/dashboard/topshiriqlar/yaratish/${a.type}?id=${a.id}`);
     }
-    function remove(a: Activity) {
+    async function remove(a: BoardActivity) {
         if (confirm(`"${a.title}" topshirig'ini o'chirasizmi?`)) {
-            activityStore.remove(a.id);
+            try { await activitiesApi.remove(a.id); } catch {}
             reload();
         }
     }

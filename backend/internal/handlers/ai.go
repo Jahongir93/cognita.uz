@@ -286,3 +286,136 @@ Question types to use: %s`,
 
 	return c.Status(fiber.StatusOK).JSON(questions)
 }
+
+// callLLM — umumiy chat completion chaqiruvi (Groq → OpenAI fallback).
+func (h *AIHandler) callLLM(system, user string) (string, error) {
+	apiKey := h.loadSetting("groq_api_key", "")
+	baseURL := "https://api.groq.com/openai/v1/chat/completions"
+	model := h.loadSetting("ai_model", "llama-3.3-70b-versatile")
+	if apiKey == "" {
+		apiKey = h.loadSetting("openai_api_key", "")
+		baseURL = "https://api.openai.com/v1/chat/completions"
+		model = h.loadSetting("ai_model", "gpt-4o-mini")
+	}
+	if apiKey == "" {
+		return "", fmt.Errorf("AI API kaliti sozlanmagan. Sozlamalar sahifasiga o'ting.")
+	}
+
+	payload := openAIRequest{
+		Model: model,
+		Messages: []openAIMessage{
+			{Role: "system", Content: system},
+			{Role: "user", Content: user},
+		},
+		Temperature: 0.8,
+	}
+	body, _ := json.Marshal(payload)
+	req, err := http.NewRequest(http.MethodPost, baseURL, bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	rb, _ := io.ReadAll(resp.Body)
+
+	var ar openAIResponse
+	if err := json.Unmarshal(rb, &ar); err != nil {
+		return "", err
+	}
+	if ar.Error != nil {
+		return "", fmt.Errorf(ar.Error.Message)
+	}
+	if len(ar.Choices) == 0 {
+		return "", fmt.Errorf("AI javob qaytarmadi")
+	}
+	content := strings.TrimSpace(ar.Choices[0].Message.Content)
+	if strings.HasPrefix(content, "```") {
+		if s := strings.Index(content, "\n"); s != -1 {
+			if e := strings.LastIndex(content, "```"); e > s {
+				content = strings.TrimSpace(content[s+1 : e])
+			}
+		}
+	}
+	return content, nil
+}
+
+// GenerateActivityRequest — POST /api/ai/generate-activity tanasi.
+type GenerateActivityRequest struct {
+	Kind  string `json:"kind"`  // quiz|truefalse|pairs|groups|words|prompts
+	Topic string `json:"topic"`
+	Count int    `json:"count"`
+}
+
+// activityShape — har bir kontent turi uchun aniq JSON namunasi va ko'rsatma.
+func activityShape(kind string) (example, instruction string, ok bool) {
+	switch kind {
+	case "quiz":
+		return `{"questions":[{"text":"Savol matni","options":["A variant","B variant","C variant","D variant"],"correct":0}]}`,
+			`Har savolda 3-4 ta variant bo'lsin. "correct" — to'g'ri variantning indeksi (0 dan boshlanadi).`, true
+	case "truefalse":
+		return `{"statements":[{"text":"Fikr matni","answer":true}]}`,
+			`Har fikr aniq to'g'ri (true) yoki noto'g'ri (false) bo'lsin.`, true
+	case "pairs":
+		return `{"pairs":[{"left":"Atama","right":"Ta'rif yoki mos juftlik"}]}`,
+			`Chap va o'ng bir-biriga mos juftlik bo'lsin (atama-ta'rif, savol-javob).`, true
+	case "groups":
+		return `{"groups":[{"name":"Guruh nomi","items":["element 1","element 2","element 3"]}]}`,
+			`2-4 ta guruh yarat, har birida 3-5 ta element.`, true
+	case "words":
+		return `{"words":[{"word":"SOZ","hint":"qisqa izoh"}]}`,
+			`Har bir element bitta so'z (bo'shliqsiz) va qisqa izoh bo'lsin.`, true
+	case "prompts":
+		return `{"prompts":["Savol yoki topshiriq matni"]}`,
+			`Har biri qisqa, ochiq savol yoki topshiriq bo'lsin.`, true
+	}
+	return "", "", false
+}
+
+// POST /api/ai/generate-activity — doska topshirig'i uchun kontent yaratadi.
+func (h *AIHandler) GenerateActivity(c *fiber.Ctx) error {
+	var req GenerateActivityRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+	if req.Topic == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Mavzu kiriting"})
+	}
+	if req.Count <= 0 || req.Count > 20 {
+		req.Count = 6
+	}
+
+	example, instruction, ok := activityShape(req.Kind)
+	if !ok {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Noma'lum tur"})
+	}
+
+	system := fmt.Sprintf(
+		`Sen O'zbekiston maktablari uchun ta'lim materiallari yaratuvchisan.
+Faqat o'zbek tilida, FAQAT yaroqli JSON qaytar (markdownsiz, izohsiz).
+JSON aynan shu shaklda bo'lsin: %s
+%s`,
+		example, instruction,
+	)
+	user := fmt.Sprintf(`"%s" mavzusi bo'yicha %d ta element yarat.`, req.Topic, req.Count)
+
+	content, err := h.callLLM(system, user)
+	if err != nil {
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{"error": "AI xatosi: " + err.Error()})
+	}
+
+	// Yaroqli JSON ekanini tekshirish
+	var probe map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(content), &probe); err != nil {
+		return c.Status(fiber.StatusBadGateway).JSON(fiber.Map{
+			"error": "AI yaroqsiz javob qaytardi, qayta urinib ko'ring",
+			"raw":   content,
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"content": json.RawMessage(content)})
+}

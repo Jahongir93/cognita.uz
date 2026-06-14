@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { page } from '$app/stores';
-    import { activityStore, type Activity } from '$lib/stores/activities';
+    import { activitiesApi, type BoardActivity } from '$lib/api/client';
     import { getModule } from '$lib/data/activityModules';
 
     import QuizBoard from '$lib/components/board/QuizBoard.svelte';
@@ -14,14 +14,17 @@
     import BoxBoard from '$lib/components/board/BoxBoard.svelte';
 
     const id = $page.params.id ?? '';
-    let activity: Activity | undefined;
+    let activity: BoardActivity | undefined;
     let player = '';
     let notFound = false;
 
-    onMount(() => {
-        activity = activityStore.get(id);
-        if (!activity) { notFound = true; return; }
-        player = getModule(activity.type)?.player ?? '';
+    onMount(async () => {
+        try {
+            activity = await activitiesApi.get(id);
+            player = getModule(activity.type)?.player ?? '';
+        } catch {
+            notFound = true;
+        }
     });
 
     function exit() { window.close(); if (!window.closed) history.back(); }
@@ -43,7 +46,7 @@
             <div class="msg">
                 <p class="msg-icon">😕</p>
                 <p>Topshiriq topilmadi.</p>
-                <p class="msg-sub">U boshqa qurilmada yaratilgan bo'lishi mumkin (topshiriqlar shu brauzerda saqlanadi).</p>
+                <p class="msg-sub">Topshiriq o'chirilgan bo'lishi yoki sizga tegishli bo'lmasligi mumkin. Tizimga kirganingizni tekshiring.</p>
             </div>
         {:else if activity}
             {#if player === 'quiz'}

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { sfx, confetti } from '$lib/boardFx';
     export let content: any;
     const questions: { text: string; options: string[]; correct: number }[] = content?.questions ?? [];
 
@@ -15,11 +16,11 @@
         if (revealed) return;
         selected = i;
         revealed = true;
-        if (i === q.correct) score++;
+        if (i === q.correct) { score++; sfx('correct'); } else { sfx('wrong'); }
     }
     function next() {
         if (idx < questions.length - 1) { idx++; selected = null; revealed = false; }
-        else finished = true;
+        else { finished = true; sfx('win'); confetti(); }
     }
     let finished = false;
     function restart() { idx = 0; selected = null; revealed = false; score = 0; finished = false; }

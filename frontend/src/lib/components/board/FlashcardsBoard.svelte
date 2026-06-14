@@ -1,9 +1,11 @@
 <script lang="ts">
+    import { sfx } from '$lib/boardFx';
     export let content: any;
     const pairs: { left: string; right: string }[] = content?.pairs ?? [];
 
     let idx = 0;
     let flipped = false;
+    function toggle() { flipped = !flipped; sfx('flip'); }
 
     $: p = pairs[idx];
     function next() { if (idx < pairs.length - 1) { idx++; flipped = false; } }
@@ -17,7 +19,7 @@
         <div class="stage">
             <button class="flip-btn prev" on:click={prev} disabled={idx === 0}>‹</button>
 
-            <button class="fcard" class:flipped on:click={() => flipped = !flipped}>
+            <button class="fcard" class:flipped on:click={toggle}>
                 <div class="fc-inner">
                     <div class="fc-face front"><span class="hint">Savol</span>{p.left}</div>
                     <div class="fc-face back"><span class="hint">Javob</span>{p.right}</div>

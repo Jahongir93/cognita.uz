@@ -18,6 +18,7 @@ func Setup(app *fiber.App, db *pgxpool.Pool, hub *ws.Hub) {
 	classH := handlers.NewClassHandler(db)
 	settingsH := handlers.NewSettingsHandler(db)
 	aiH := handlers.NewAIHandler(db)
+	activityH := handlers.NewActivityHandler(db)
 
 	// ── CORS & Global ─────────────────────────────────────────────────────────
 	api := app.Group("/api")
@@ -63,6 +64,15 @@ func Setup(app *fiber.App, db *pgxpool.Pool, hub *ws.Hub) {
 	// ── AI ────────────────────────────────────────────────────────────────────
 	api.Post("/ai/generate-questions", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin), aiH.GenerateQuestions)
 	api.Post("/ai/test", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin), aiH.TestConnection)
+	api.Post("/ai/generate-activity", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin), aiH.GenerateActivity)
+
+	// ── Doska topshiriqlari ────────────────────────────────────────────────────
+	activities := api.Group("/activities", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin))
+	activities.Get("/", activityH.List)
+	activities.Post("/", activityH.Create)
+	activities.Get("/:id", activityH.Get)
+	activities.Put("/:id", activityH.Update)
+	activities.Delete("/:id", activityH.Delete)
 
 
 	// ── Exams & Olympiads ─────────────────────────────────────────────────────

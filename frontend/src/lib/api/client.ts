@@ -162,7 +162,36 @@ export const ai = {
         request<{ ok: boolean; message: string }>('/api/ai/test', {
             method: 'POST',
             body: JSON.stringify({ provider, key: key ?? '' })
+        }),
+
+    // Doska topshirig'i uchun AI bilan kontent yaratish.
+    generateActivity: (kind: string, topic: string, count: number) =>
+        request<{ content: any }>('/api/ai/generate-activity', {
+            method: 'POST',
+            body: JSON.stringify({ kind, topic, count })
         })
+};
+
+// ─── Doska topshiriqlari (board_activities) ──────────────────────────────────
+
+export interface BoardActivity {
+    id: string;
+    type: string;
+    title: string;
+    content?: any;
+    created_at: string;
+    updated_at: string;
+}
+
+export const activitiesApi = {
+    list: () => request<BoardActivity[]>('/api/activities'),
+    get: (id: string) => request<BoardActivity>(`/api/activities/${id}`),
+    create: (type: string, title: string, content: any) =>
+        request<BoardActivity>('/api/activities', { method: 'POST', body: JSON.stringify({ type, title, content }) }),
+    update: (id: string, title: string, content: any) =>
+        request(`/api/activities/${id}`, { method: 'PUT', body: JSON.stringify({ title, content }) }),
+    remove: (id: string) =>
+        request(`/api/activities/${id}`, { method: 'DELETE' })
 };
 
 // ─── Settings ─────────────────────────────────────────────────────────────────

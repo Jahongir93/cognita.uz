@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { sfx, confetti } from '$lib/boardFx';
     export let content: any;
     const groups: { name: string; items: string[] }[] = content?.groups ?? [];
 
@@ -21,13 +22,16 @@
     $: pool = tiles.map((t, i) => ({ t, i })).filter(x => x.t.placed === null);
     $: done = tiles.length > 0 && pool.length === 0;
 
-    function selectTile(i: number) { selected = selected === i ? null : i; }
+    function selectTile(i: number) { selected = selected === i ? null : i; if (selected !== null) sfx('pick'); }
     function dropTo(gi: number) {
         if (selected === null) return;
         const t = tiles[selected];
         if (t.group === gi) {
             tiles[selected].placed = gi; tiles = tiles; selected = null;
+            sfx('correct');
+            if (tiles.every(x => x.placed !== null)) { sfx('win'); confetti(); }
         } else {
+            sfx('wrong');
             wrongGroup = gi;
             setTimeout(() => wrongGroup = null, 500);
         }

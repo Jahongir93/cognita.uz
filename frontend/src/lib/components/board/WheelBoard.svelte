@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { sfx, confetti } from '$lib/boardFx';
     export let content: any;
     const prompts: string[] = content?.prompts ?? [];
 
@@ -25,7 +26,7 @@
         let delta = desiredMod - currentMod;
         if (delta < 0) delta += 360;
         rotation += 5 * 360 + delta;
-        setTimeout(() => { result = prompts[target]; spinning = false; }, 4200);
+        setTimeout(() => { result = prompts[target]; spinning = false; sfx('reveal'); confetti(36); }, 4200);
     }
 </script>
 

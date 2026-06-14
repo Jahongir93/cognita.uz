@@ -78,6 +78,17 @@ func Migrate() {
 			time_taken   INT NOT NULL DEFAULT 0,
 			submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		)`,
+		// Doska topshiriqlari (Topshiriqlar bo'limi)
+		`CREATE TABLE IF NOT EXISTS board_activities (
+			id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			type       VARCHAR(40) NOT NULL,
+			title      VARCHAR(200) NOT NULL,
+			content    JSONB NOT NULL DEFAULT '{}',
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_board_activities_teacher ON board_activities(teacher_id)`,
 	}
 
 	for _, stmt := range migrations {

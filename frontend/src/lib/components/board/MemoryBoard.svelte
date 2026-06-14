@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from 'svelte';
+    import { sfx, confetti } from '$lib/boardFx';
     export let content: any;
     const pairs: { left: string; right: string }[] = content?.pairs ?? [];
 
@@ -33,13 +34,15 @@
 
     function flip(i: number) {
         if (busy || cards[i].flipped || cards[i].matched) return;
-        cards[i].flipped = true; cards = cards;
+        cards[i].flipped = true; cards = cards; sfx('flip');
         if (first === null) { first = i; return; }
         moves++;
         const a = cards[first], b = cards[i];
         if (a.pid === b.pid) {
             cards[first].matched = true; cards[i].matched = true; cards = cards;
             matchedCount++; first = null;
+            sfx('correct');
+            if (matchedCount === pairs.length) { sfx('win'); confetti(); }
         } else {
             busy = true;
             const f = first; first = null;

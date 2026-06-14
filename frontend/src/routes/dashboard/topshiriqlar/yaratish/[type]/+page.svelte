@@ -3,7 +3,7 @@
     import { page } from '$app/stores';
     import { goto } from '$app/navigation';
     import { getModule } from '$lib/data/activityModules';
-    import { activityStore } from '$lib/stores/activities';
+    import { activitiesApi, ai as aiApi } from '$lib/api/client';
 
     const type = ($page.params as Record<string, string>).type ?? '';
     const mod = getModule(type);
@@ -31,20 +31,23 @@
         else if (kind === 'prompts') prompts = [''];
     }
 
-    onMount(() => {
+    function applyContent(c: any) {
+        if (kind === 'quiz') questions = (c.questions ?? []).map((q: any) => ({ text: q.text ?? '', options: q.options ?? ['', ''], correct: q.correct ?? 0 }));
+        else if (kind === 'truefalse') statements = (c.statements ?? []).map((s: any) => ({ text: s.text ?? '', answer: !!s.answer }));
+        else if (kind === 'pairs') pairs = (c.pairs ?? []).map((p: any) => ({ left: p.left ?? '', right: p.right ?? '' }));
+        else if (kind === 'groups') groups = (c.groups ?? []).map((g: any) => ({ name: g.name ?? '', items: g.items ?? [''] }));
+        else if (kind === 'words') words = (c.words ?? []).map((w: any) => ({ word: w.word ?? '', hint: w.hint ?? '' }));
+        else if (kind === 'prompts') prompts = c.prompts ?? [''];
+    }
+
+    onMount(async () => {
         const id = $page.url.searchParams.get('id');
         if (id) {
-            const a = activityStore.get(id);
-            if (a) {
+            try {
+                const a = await activitiesApi.get(id);
                 title = a.title;
-                const c: any = a.content;
-                if (kind === 'quiz') questions = c.questions ?? [];
-                else if (kind === 'truefalse') statements = c.statements ?? [];
-                else if (kind === 'pairs') pairs = c.pairs ?? [];
-                else if (kind === 'groups') groups = c.groups ?? [];
-                else if (kind === 'words') words = c.words ?? [];
-                else if (kind === 'prompts') prompts = c.prompts ?? [];
-            }
+                applyContent(a.content ?? {});
+            } catch { seed(); }
         } else {
             seed();
         }
@@ -119,21 +122,47 @@
         return null;
     }
 
-    function save(thenPlay = false) {
+    let saving = false;
+    async function save(thenPlay = false) {
         error = '';
         if (!title.trim()) { error = "Sarlavha kiriting"; return; }
         const content = buildContent();
         if (!content) return;
-
-        let id = editId;
-        if (id) {
-            activityStore.update(id, { title: title.trim(), content });
-        } else {
-            const a = activityStore.create(type, title.trim(), content);
-            id = a.id;
+        saving = true;
+        try {
+            let id = editId;
+            if (id) {
+                await activitiesApi.update(id, title.trim(), content);
+            } else {
+                const a = await activitiesApi.create(type, title.trim(), content);
+                id = a.id;
+            }
+            if (thenPlay && id) window.open(`/board/${id}`, '_blank');
+            goto('/dashboard/topshiriqlar');
+        } catch (e: any) {
+            error = e?.message ?? 'Saqlashda xato';
+            saving = false;
         }
-        if (thenPlay && id) window.open(`/board/${id}`, '_blank');
-        goto('/dashboard/topshiriqlar');
+    }
+
+    // ── AI bilan yaratish ──
+    let aiTopic = '';
+    let aiCount = 6;
+    let aiLoading = false;
+    let aiError = '';
+    async function aiGenerate() {
+        aiError = '';
+        if (!aiTopic.trim()) { aiError = 'Mavzu kiriting'; return; }
+        aiLoading = true;
+        try {
+            const res = await aiApi.generateActivity(kind, aiTopic.trim(), aiCount);
+            applyContent(res.content ?? {});
+            if (!title.trim()) title = aiTopic.trim();
+        } catch (e: any) {
+            aiError = e?.message ?? 'AI xatosi';
+        } finally {
+            aiLoading = false;
+        }
     }
 </script>
 
@@ -155,6 +184,23 @@
             <span class="lbl">Sarlavha</span>
             <input class="inp" bind:value={title} placeholder="Masalan: Hayvonlar nomi" />
         </label>
+    </div>
+
+    <!-- AI bilan to'ldirish -->
+    <div class="ai-card">
+        <div class="ai-head"><span class="ai-icon">✨</span> AI bilan avtomatik yaratish</div>
+        <div class="ai-row">
+            <input class="inp" bind:value={aiTopic} placeholder="Mavzu (masalan: O'zbekiston shaharlari)"
+                   on:keydown={(e) => e.key === 'Enter' && aiGenerate()} />
+            <select class="inp count" bind:value={aiCount}>
+                {#each [3,5,6,8,10,12] as n}<option value={n}>{n} ta</option>{/each}
+            </select>
+            <button class="ai-btn" on:click={aiGenerate} disabled={aiLoading}>
+                {#if aiLoading}<span class="spin"></span> Yaratilmoqda...{:else}✨ Yaratish{/if}
+            </button>
+        </div>
+        {#if aiError}<div class="ai-err">⚠️ {aiError}</div>{/if}
+        <p class="ai-note">AI yaratgan kontent quyida ko'rinadi — keyin tahrirlashingiz mumkin.</p>
     </div>
 
     {#if loaded}
@@ -254,8 +300,8 @@
     {#if error}<div class="err">⚠️ {error}</div>{/if}
 
     <div class="actions">
-        <button class="btn ghost" on:click={() => save(false)}>💾 Saqlash</button>
-        <button class="btn pri" on:click={() => save(true)}>▶ Saqlash va doskada ochish</button>
+        <button class="btn ghost" on:click={() => save(false)} disabled={saving}>💾 Saqlash</button>
+        <button class="btn pri" on:click={() => save(true)} disabled={saving}>▶ Saqlash va doskada ochish</button>
     </div>
 </div>
 
@@ -320,6 +366,19 @@
     .add-sm:hover { color: var(--primary); border-color: var(--primary); }
 
     .err { color: var(--danger); background: #fee2e2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px 13px; margin-bottom: 14px; font-size: 0.85rem; }
+
+    .ai-card { background: linear-gradient(135deg, #ede9fe, #eff6ff); border: 1.5px solid #c7d2fe; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+    .ai-head { font-weight: 800; color: #4338ca; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .ai-icon { font-size: 1.2rem; }
+    .ai-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .ai-row .inp { flex: 1; min-width: 180px; }
+    .ai-row .count { flex: 0 0 96px; min-width: 0; }
+    .ai-btn { padding: 10px 20px; border: none; border-radius: 10px; cursor: pointer; background: linear-gradient(135deg,#7c3aed,#6366f1); color: #fff; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .ai-btn:disabled { opacity: 0.6; cursor: default; }
+    .spin { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color:#fff; border-radius:50%; animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .ai-err { color: var(--danger); font-size: 0.82rem; margin-top: 8px; }
+    .ai-note { font-size: 0.76rem; color: #6366f1; margin: 8px 0 0; }
 
     .actions { display: flex; gap: 10px; flex-wrap: wrap; }
     .btn { padding: 11px 22px; border-radius: 11px; font-weight: 700; font-size: 0.9rem; cursor: pointer; border: 1.5px solid var(--border); }

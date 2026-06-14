@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { sfx, confetti } from '$lib/boardFx';
     export let content: any;
     const words: { word: string; hint?: string }[] = content?.words ?? [];
 
@@ -38,11 +39,12 @@
     function check() {
         if (built.length === target.length) {
             solved = built.map(b => b.ch).join('') === target;
+            if (solved) sfx('correct'); else sfx('wrong');
         }
     }
     function next() {
         if (idx < words.length - 1) idx++;
-        else finished = true;
+        else { finished = true; sfx('win'); confetti(); }
     }
     function restart() { idx = 0; finished = false; load(); }
 </script>
