@@ -6,8 +6,20 @@
     import { gameStore } from '$lib/stores/game';
     import { getWebSocketURL } from '$lib/api/client';
     import type { QuestionEndPayload } from '$lib/api/types';
+    import QRCode from 'qrcode';
 
     const pin = $page.params.roomCode;
+
+    // QR kod + kirish havolasi (har sessiyada avtomatik)
+    let joinUrl = '';
+    let qrDataUrl = '';
+    let urlCopied = false;
+    function copyUrl() {
+        navigator.clipboard.writeText(joinUrl).then(() => {
+            urlCopied = true;
+            setTimeout(() => (urlCopied = false), 2000);
+        }).catch(() => {});
+    }
     let socket: GameSocket;
     let correctIds: string[] = [];
     let questionStats: QuestionEndPayload['stats'] | null = null;
@@ -33,6 +45,12 @@
     onMount(() => {
         const token = localStorage.getItem('token');
         if (!token) { goto('/auth/login'); return; }
+
+        // Kirish havolasi va QR kodni generatsiya qilish
+        joinUrl = `${window.location.origin}/join?pin=${pin}`;
+        QRCode.toDataURL(joinUrl, { width: 360, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } })
+            .then(url => qrDataUrl = url)
+            .catch(() => {});
 
         socket = new GameSocket(getWebSocketURL(pin, 'host', token));
         socket.onStatus(s => gameStore.setConnectionStatus(s));
@@ -161,8 +179,26 @@
                     <p class="lob-sub">{$gameStore.totalQuestions} ta savol</p>
                 </div>
                 <div class="pin-card">
-                    <p class="pin-instr">O'quvchilar <strong>cognita.uz/join</strong> ga kirib PIN ni yozing:</p>
-                    <div class="big-pin">{pin}</div>
+                    <div class="join-cols">
+                        <div class="join-left">
+                            <p class="pin-instr">O'quvchilar <strong>cognita.uz/join</strong> ga kirib PIN ni yozadi:</p>
+                            <div class="big-pin">{pin}</div>
+                            {#if joinUrl}
+                                <div class="url-row">
+                                    <span class="url-text" title={joinUrl}>{joinUrl}</span>
+                                    <button class="url-copy" on:click={copyUrl}>
+                                        {urlCopied ? '✓ Nusxalandi' : '📋 Nusxa'}
+                                    </button>
+                                </div>
+                            {/if}
+                        </div>
+                        {#if qrDataUrl}
+                            <div class="qr-box">
+                                <img src={qrDataUrl} alt="QR kod orqali kirish" class="qr-img" />
+                                <span class="qr-cap">📱 QR kodni skanerlang</span>
+                            </div>
+                        {/if}
+                    </div>
                 </div>
                 <div class="players-wrap">
                     <p class="players-heading">👥 {activePlayers.length} o'yinchi qo'shildi</p>
@@ -469,14 +505,35 @@
         background: #1e293b;
         border: 1px solid #334155;
         border-radius: 20px;
-        padding: 28px 40px;
+        padding: 26px 32px;
         text-align: center;
         width: 100%;
-        max-width: 480px;
+        max-width: 640px;
     }
     .pin-instr { color: #94a3b8; margin: 0 0 12px; font-size: 0.95rem; }
     .pin-instr strong { color: #6366f1; }
-    .big-pin { font-size: 4.5rem; font-weight: 900; letter-spacing: 0.35em; color: #f1f5f9; line-height: 1; }
+    .big-pin { font-size: clamp(2.6rem, 9vw, 4.5rem); font-weight: 900; letter-spacing: 0.28em; color: #f1f5f9; line-height: 1; }
+
+    /* ── QR + havola ── */
+    .join-cols { display: flex; align-items: center; gap: 28px; justify-content: center; flex-wrap: wrap; }
+    .join-left { flex: 1; min-width: 220px; }
+    .url-row {
+        display: flex; align-items: center; gap: 8px; margin-top: 16px;
+        background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 6px 6px 6px 14px;
+    }
+    .url-text { flex: 1; color: #cbd5e1; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+    .url-copy {
+        flex-shrink: 0; border: none; border-radius: 8px; cursor: pointer;
+        background: #6366f1; color: #fff; font-weight: 700; font-size: 0.78rem; padding: 8px 12px; white-space: nowrap;
+    }
+    .url-copy:hover { filter: brightness(1.1); }
+    .qr-box { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .qr-img {
+        width: 180px; height: 180px; border-radius: 14px; background: #fff; padding: 8px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+    .qr-cap { color: #94a3b8; font-size: 0.8rem; font-weight: 600; }
+    @media (max-width: 560px) { .qr-img { width: 150px; height: 150px; } }
     .players-wrap { width: 100%; max-width: 700px; }
     .players-heading { color: #94a3b8; font-size: 0.85rem; margin: 0 0 10px; text-align: center; }
     .players-grid { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }

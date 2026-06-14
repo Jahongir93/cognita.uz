@@ -1,6 +1,7 @@
 <script lang="ts">
     import { goto } from '$app/navigation';
     import { onMount } from 'svelte';
+    import { page } from '$app/stores';
     import { rooms } from '$lib/api/client';
 
     let pin = '';
@@ -16,7 +17,15 @@
 
     onMount(() => {
         mounted = true;
-        pinInputs[0]?.focus();
+        // QR kod / havola orqali kelganda PIN ni avtomatik to'ldirish: /join?pin=123456
+        const qpin = ($page.url.searchParams.get('pin') ?? '').replace(/\D/g, '').slice(0, 6);
+        if (qpin.length >= 4) {
+            qpin.split('').forEach((ch, i) => { if (pinInputs[i]) pinInputs[i].value = ch; });
+            pin = qpin;
+            document.getElementById('nick')?.focus();
+        } else {
+            pinInputs[0]?.focus();
+        }
     });
 
     function handlePinKey(i: number, e: KeyboardEvent) {
