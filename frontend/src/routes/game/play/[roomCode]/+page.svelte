@@ -160,10 +160,10 @@
 
     <!-- ═══ QUESTION / ANSWERED ════════════════════════════════════════════ -->
     {:else if phase === 'question' || phase === 'answered'}
-        <div class="q-screen">
+        <div class="q-screen" class:classic={!isSelfPaced}>
             <div class="q-topbar">
                 <span class="q-num">{(question?.question_index ?? 0) + 1} / {$gameStore.totalQuestions}</span>
-                <div class="timer-wrap">
+                <div class="timer-wrap" class:danger={$gameStore.secondsLeft <= 5 && phase === 'question'}>
                     <svg viewBox="0 0 36 36" class="timer-svg">
                         <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e2e8f0" stroke-width="3.2"/>
                         <circle cx="18" cy="18" r="15.9" fill="none"
@@ -198,7 +198,7 @@
                             class="opt"
                             class:selected={$gameStore.myAnswer === opt.id}
                             class:dimmed={phase === 'answered' && $gameStore.myAnswer !== opt.id}
-                            style="--c:{cfg.color}"
+                            style="--c:{cfg.color};--i:{i}"
                             disabled={phase === 'answered'}
                             on:click={() => submitOption(opt.id)}
                         >
@@ -232,7 +232,7 @@
                             class="opt"
                             class:selected={$gameStore.myAnswer === opt.id}
                             class:dimmed={phase === 'answered' && $gameStore.myAnswer !== opt.id}
-                            style="--c:{cfg.color}"
+                            style="--c:{cfg.color};--i:{i}"
                             disabled={phase === 'answered'}
                             on:click={() => submitOption(opt.id)}
                         >
@@ -339,6 +339,11 @@
     <!-- ═══ GAME OVER ═════════════════════════════════════════════════════════ -->
     {:else if phase === 'game_over'}
         <div class="gameover-screen">
+            <div class="confetti" aria-hidden="true">
+                {#each Array(18) as _, i}
+                    <span class="cf" style="left:{(i * 5.5) % 100}%;animation-delay:{(i % 6) * 0.22}s;background:hsl({(i * 47) % 360},90%,60%)"></span>
+                {/each}
+            </div>
             <h1 class="go-title">🏆 O'yin tugadi!</h1>
             {#if $gameStore.myParticipantId}
                 {@const me = $gameStore.leaderboard.find(e => e.id === $gameStore.myParticipantId)}
@@ -459,8 +464,17 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        background: #0f172a;
+        background:
+            radial-gradient(circle at 18% 12%, rgba(56,72,140,0.55) 0%, transparent 45%),
+            radial-gradient(circle at 84% 88%, rgba(88,42,120,0.55) 0%, transparent 45%),
+            #0b1220;
+        background-size: 170% 170%, 170% 170%, 100% 100%;
+        animation: bgShift 16s ease-in-out infinite alternate;
         overflow: hidden;
+    }
+    @keyframes bgShift {
+        from { background-position: 0% 0%, 100% 100%, 0 0; }
+        to   { background-position: 35% 22%, 65% 78%, 0 0; }
     }
     .q-topbar {
         display: flex;
@@ -500,6 +514,8 @@
         position: relative;
         z-index: 1;
     }
+    .timer-wrap.danger { animation: timerPulse 0.6s ease-in-out infinite; }
+    @keyframes timerPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.2); } }
     .q-body {
         flex: 1;
         display: flex;
@@ -528,33 +544,81 @@
     .opts-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        gap: 10px;
         padding: 0 12px 12px;
     }
     .opt {
         display: flex;
         align-items: center;
         gap: 10px;
-        padding: 14px 16px;
+        padding: 16px 18px;
         border: none;
-        border-radius: 10px;
+        border-radius: 14px;
         background: var(--c);
         color: white;
-        font-size: clamp(0.85rem, 2.5vw, 1rem);
+        font-size: clamp(0.9rem, 2.6vw, 1.05rem);
         font-weight: 700;
         cursor: pointer;
-        transition: transform 0.12s, opacity 0.2s, filter 0.2s;
+        transition: transform 0.12s, filter 0.2s, box-shadow 0.2s;
         text-align: left;
-        min-height: 58px;
+        min-height: 64px;
         position: relative;
+        overflow: hidden;
+        box-shadow: 0 6px 0 rgba(0,0,0,0.22), 0 8px 18px rgba(0,0,0,0.28);
+        animation: optIn 0.42s cubic-bezier(0.22,1,0.36,1) both;
+        animation-delay: calc(var(--i, 0) * 0.07s);
     }
-    .opt:hover:not(:disabled) { transform: scale(1.03); filter: brightness(1.1); }
-    .opt:active:not(:disabled) { transform: scale(0.97); }
-    .opt.selected { outline: 4px solid white; }
-    .opt.dimmed { opacity: 0.35; filter: grayscale(0.4); }
-    .opt-shape { font-size: 1.1rem; flex-shrink: 0; }
-    .opt-label { flex: 1; line-height: 1.2; }
-    .opt-check { font-size: 1.2rem; margin-left: auto; }
+    /* glossy sheen */
+    .opt::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.22), rgba(255,255,255,0) 48%);
+        pointer-events: none;
+    }
+    .opt:hover:not(:disabled) {
+        filter: brightness(1.08);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 0 rgba(0,0,0,0.22), 0 14px 26px rgba(0,0,0,0.32);
+    }
+    .opt:active:not(:disabled) {
+        transform: translateY(4px);
+        box-shadow: 0 2px 0 rgba(0,0,0,0.22), 0 4px 10px rgba(0,0,0,0.25);
+    }
+    .opt.selected {
+        animation: optPop 0.4s ease;
+        outline: 4px solid #fff;
+        outline-offset: -4px;
+        box-shadow: 0 0 0 4px rgba(255,255,255,0.35), 0 10px 28px rgba(0,0,0,0.45);
+    }
+    .opt.dimmed { opacity: 0.3; filter: grayscale(0.5); transform: scale(0.97); }
+    .opt-shape { font-size: 1.3rem; flex-shrink: 0; filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3)); position: relative; z-index: 1; }
+    .opt-label { flex: 1; line-height: 1.2; position: relative; z-index: 1; }
+    .opt-check { font-size: 1.4rem; margin-left: auto; position: relative; z-index: 1; animation: checkPop 0.35s ease; }
+
+    @keyframes optIn  { from { opacity: 0; transform: translateY(26px) scale(0.9); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @keyframes optPop { 0% { transform: scale(1); } 40% { transform: scale(1.06); } 100% { transform: scale(1); } }
+    @keyframes checkPop { 0% { transform: scale(0) rotate(-30deg); } 60% { transform: scale(1.4); } 100% { transform: scale(1) rotate(0); } }
+
+    /* ── Classic rejimi: savol ekranda, tugmalar to'liq ekranni egallaydi ── */
+    .q-screen.classic .q-body { flex: 0 0 auto; padding: 14px 16px 2px; }
+    .q-screen.classic .opts-grid {
+        flex: 1;
+        gap: 12px;
+        padding: 8px 12px 14px;
+        grid-auto-rows: 1fr;
+    }
+    .q-screen.classic .opt {
+        min-height: 0;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        gap: 10px;
+        font-size: clamp(1.1rem, 5vw, 1.7rem);
+        border-radius: 22px;
+    }
+    .q-screen.classic .opt-shape { font-size: clamp(2.2rem, 10vw, 3.4rem); }
+    .q-screen.classic .opt-label { text-align: center; }
 
     .text-answer {
         display: flex;
@@ -772,8 +836,32 @@
         padding: 24px 16px;
         background: linear-gradient(160deg, #0f172a, #1e293b);
         overflow-y: auto;
+        position: relative;
     }
-    .go-title { color: #f1f5f9; font-size: 1.8rem; font-weight: 800; margin: 0; }
+    .gameover-screen > :not(.confetti) { position: relative; z-index: 1; }
+
+    /* ── Confetti ── */
+    .confetti { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .cf {
+        position: absolute;
+        top: -8%;
+        width: 9px; height: 15px;
+        border-radius: 2px;
+        opacity: 0.9;
+        animation: cfFall 2.8s linear infinite;
+    }
+    @keyframes cfFall {
+        0%   { transform: translateY(-8%) rotate(0); opacity: 0; }
+        12%  { opacity: 1; }
+        100% { transform: translateY(108vh) rotate(620deg); opacity: 0.85; }
+    }
+
+    .go-title {
+        color: #f1f5f9; font-size: 1.9rem; font-weight: 800; margin: 0;
+        animation: titleIn 0.6s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes titleIn { from { opacity: 0; transform: translateY(-16px) scale(0.9); } to { opacity: 1; transform: none; } }
+
     .final-card {
         text-align: center;
         background: linear-gradient(135deg, #1e1b4b, #4f46e5);
@@ -781,10 +869,14 @@
         padding: 24px 40px;
         color: white;
         min-width: 200px;
+        box-shadow: 0 14px 40px rgba(79,70,229,0.45);
+        animation: cardIn 0.55s cubic-bezier(0.34,1.56,0.64,1) both 0.15s;
     }
-    .fc-medal { font-size: 3rem; }
+    @keyframes cardIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+    .fc-medal { font-size: 3.2rem; display: inline-block; animation: medalBob 1.8s ease-in-out infinite; }
+    @keyframes medalBob { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-8px) rotate(4deg); } }
     .fc-pos   { font-size: 1.1rem; color: rgba(255,255,255,0.7); margin-top: 4px; }
-    .fc-score { font-size: 2rem; font-weight: 800; color: #fbbf24; }
+    .fc-score { font-size: 2.1rem; font-weight: 800; color: #fbbf24; text-shadow: 0 2px 12px rgba(251,191,36,0.5); }
     .fc-streak{ color: #fbbf24; font-size: 0.95rem; margin-top: 4px; }
 
     .play-again {

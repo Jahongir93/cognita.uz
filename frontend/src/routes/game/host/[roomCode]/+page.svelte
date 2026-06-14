@@ -648,4 +648,35 @@
     .team-name { font-weight: 800; color: #f1f5f9; flex: 1; }
     .team-members { font-size: 0.78rem; color: #94a3b8; }
     .team-score { font-weight: 800; color: #fbbf24; min-width: 70px; text-align: right; }
+
+    /* ── Dizayn boyitish: animatsiyalar ── */
+    .big-pin { animation: pinPulse 2.6s ease-in-out infinite; }
+    @keyframes pinPulse {
+        0%,100% { transform: scale(1); text-shadow: 0 0 0 rgba(99,102,241,0); }
+        50%     { transform: scale(1.04); text-shadow: 0 0 30px rgba(99,102,241,0.65); }
+    }
+    .opt-chip {
+        animation: chipIn 0.45s cubic-bezier(0.22,1,0.36,1) both;
+        box-shadow: 0 5px 0 rgba(0,0,0,0.22), 0 8px 18px rgba(0,0,0,0.25);
+        position: relative; overflow: hidden;
+    }
+    .opt-chip::before {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent 50%);
+        pointer-events: none;
+    }
+    @keyframes chipIn { from { opacity: 0; transform: translateY(16px) scale(0.94); } to { opacity: 1; transform: none; } }
+    .ans-bar-fill { transition: width 0.5s cubic-bezier(0.22,1,0.36,1); }
+
+    .pod-col { animation: podRise 0.65s cubic-bezier(0.34,1.56,0.64,1) both; }
+    .pod-1 { animation-delay: 0.1s; }
+    .pod-2 { animation-delay: 0.28s; }
+    .pod-3 { animation-delay: 0.44s; }
+    @keyframes podRise { from { opacity: 0; transform: translateY(46px); } to { opacity: 1; transform: none; } }
+
+    .btn.pri.large { animation: btnGlow 2.2s ease-in-out infinite; }
+    @keyframes btnGlow {
+        0%,100% { box-shadow: 0 0 0 rgba(99,102,241,0.0); }
+        50%     { box-shadow: 0 0 26px rgba(99,102,241,0.55); }
+    }
 </style>
