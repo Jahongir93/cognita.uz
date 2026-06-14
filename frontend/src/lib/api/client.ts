@@ -183,6 +183,35 @@ export interface BoardActivity {
     updated_at: string;
 }
 
+// ─── Ochiq testlar (Qiziqarli/Fan/IQ/Psixologik/Attestatsiya) ────────────────
+
+export interface OpenTest {
+    id: string;
+    category: string;
+    title: string;
+    description: string;
+    scored: boolean;
+    questions: number;
+    is_published: boolean;
+    play_count: number;
+    created_at: string;
+}
+
+export const openTests = {
+    // public
+    list: (category: string) => request<OpenTest[]>(`/api/opentests?category=${encodeURIComponent(category)}`),
+    take: (id: string) => request<{ id: string; title: string; category: string; scored: boolean; questions: { text: string; options: string[] }[] }>(`/api/opentests/${id}/take`),
+    submit: (id: string, body: { nickname: string; answers: number[]; time_ms: number }) =>
+        request<{ score: number; total: number; percent: number; scored: boolean; rank: number }>(`/api/opentests/${id}/submit`, { method: 'POST', body: JSON.stringify(body) }),
+    leaderboard: (id: string) => request<{ rank: number; nickname: string; score: number; total: number; time_ms: number; date: string }[]>(`/api/opentests/${id}/leaderboard`),
+    // admin
+    listAdmin: (category?: string) => request<OpenTest[]>(`/api/opentests/admin${category ? `?category=${encodeURIComponent(category)}` : ''}`),
+    getForEdit: (id: string) => request<any>(`/api/opentests/${id}/edit`),
+    create: (data: any) => request<{ id: string }>('/api/opentests', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: any) => request(`/api/opentests/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    remove: (id: string) => request(`/api/opentests/${id}`, { method: 'DELETE' }),
+};
+
 export const activitiesApi = {
     list: () => request<BoardActivity[]>('/api/activities'),
     get: (id: string) => request<BoardActivity>(`/api/activities/${id}`),

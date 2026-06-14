@@ -1,7 +1,19 @@
 <script lang="ts">
   import type { Category, Test } from '$lib/data/categories';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import { openTests, type OpenTest } from '$lib/api/client';
 
   export let category: Category;
+
+  // Admin tomonidan qo'shilgan haqiqiy testlar (API)
+  let apiTests: OpenTest[] = [];
+  let apiLoading = true;
+  onMount(async () => {
+    try { apiTests = await openTests.list(category.id); } catch { apiTests = []; }
+    apiLoading = false;
+  });
+  function solve(t: OpenTest) { goto(`/test/${t.id}`); }
 
   let search = '';
   let activeSubcat = 'all';
@@ -127,6 +139,31 @@
 
 <!-- GRID -->
 <main class="content">
+  <!-- ── Haqiqiy testlar (admin qo'shgan) ── -->
+  {#if apiTests.length}
+    <section class="api-section" style="--g1:{category.g1};--g2:{category.g2}">
+      <h2 class="api-heading">✨ Mavjud testlar</h2>
+      <div class="api-grid">
+        {#each apiTests as t (t.id)}
+          <button class="api-card" on:click={() => solve(t)}>
+            <div class="ac-top">
+              <span class="ac-title">{t.title}</span>
+              {#if t.scored}<span class="ac-badge">🏆</span>{/if}
+            </div>
+            {#if t.description}<p class="ac-desc">{t.description}</p>{/if}
+            <div class="ac-meta">
+              <span>❓ {t.questions} savol</span>
+              <span>▶ {t.play_count}</span>
+            </div>
+            <span class="ac-play">Yechish →</span>
+          </button>
+        {/each}
+      </div>
+    </section>
+  {:else if !apiLoading}
+    <div class="api-empty">Bu bo'limда hali test qo'shilmagan. Tez orada qo'shiladi! 🚀</div>
+  {/if}
+
   {#if filtered.length === 0}
     <div class="empty">
       <div class="empty-icon">🔍</div>
@@ -482,6 +519,24 @@
     margin: 0 auto;
     padding: 1.5rem 1.5rem 3rem;
   }
+  /* ── Haqiqiy testlar (API) ── */
+  .api-section { margin-bottom: 2.5rem; }
+  .api-heading { font-size: 1.3rem; font-weight: 800; color: #0f172a; margin: 0 0 1rem; }
+  .api-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+  .api-card {
+    display: flex; flex-direction: column; gap: 8px; text-align: left;
+    background: #fff; border: 1.5px solid #e8eaf6; border-radius: 16px; padding: 1.1rem 1.2rem;
+    cursor: pointer; transition: transform .2s, box-shadow .2s, border-color .2s;
+    box-shadow: 0 2px 12px rgba(99,102,241,.06);
+  }
+  .api-card:hover { transform: translateY(-4px); border-color: var(--g1, #6366f1); box-shadow: 0 14px 32px rgba(99,102,241,.16); }
+  .ac-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .ac-title { font-weight: 800; color: #0f172a; font-size: 1rem; }
+  .ac-badge { font-size: 1rem; }
+  .ac-desc { font-size: .82rem; color: #64748b; margin: 0; line-height: 1.4; }
+  .ac-meta { display: flex; gap: 14px; font-size: .76rem; color: #94a3b8; }
+  .ac-play { margin-top: 4px; font-weight: 800; font-size: .85rem; background: linear-gradient(135deg, var(--g1,#6366f1), var(--g2,#8b5cf6)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .api-empty { background: #f8faff; border: 1.5px dashed #e8eaf6; border-radius: 16px; padding: 2rem; text-align: center; color: #64748b; margin-bottom: 2rem; }
   .grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

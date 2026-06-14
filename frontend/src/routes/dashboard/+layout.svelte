@@ -51,7 +51,8 @@
     {
       label: 'BOSHQARUV',
       items: [
-        { href: '/dashboard/categories', icon: '📂', label: 'Kategoriyalar' },
+        { href: '/dashboard/open-tests', icon: '📂', label: 'Ochiq testlar', badge: 'Yangi' },
+        { href: '/dashboard/categories', icon: '🗂️', label: 'Kategoriyalar' },
         { href: '/dashboard/classes',    icon: '👨‍🏫', label: 'Sinflar' },
         { href: '/dashboard/reports',    icon: '📈', label: 'Hisobotlar' },
       ]

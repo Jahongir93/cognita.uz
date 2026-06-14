@@ -19,6 +19,7 @@ func Setup(app *fiber.App, db *pgxpool.Pool, hub *ws.Hub) {
 	settingsH := handlers.NewSettingsHandler(db)
 	aiH := handlers.NewAIHandler(db)
 	activityH := handlers.NewActivityHandler(db)
+	openTestH := handlers.NewOpenTestHandler(db)
 
 	// ── CORS & Global ─────────────────────────────────────────────────────────
 	api := app.Group("/api")
@@ -65,6 +66,19 @@ func Setup(app *fiber.App, db *pgxpool.Pool, hub *ws.Hub) {
 	api.Post("/ai/generate-questions", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin), aiH.GenerateQuestions)
 	api.Post("/ai/test", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin), aiH.TestConnection)
 	api.Post("/ai/generate-activity", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin), aiH.GenerateActivity)
+
+	// ── Ochiq testlar (Qiziqarli/Fan/IQ/Psixologik/Attestatsiya) ───────────────
+	// Public (yechish, ro'yxat, leaderboard) — login shart emas
+	api.Get("/opentests", openTestH.List)
+	api.Get("/opentests/:id/take", openTestH.Take)
+	api.Post("/opentests/:id/submit", openTestH.Submit)
+	api.Get("/opentests/:id/leaderboard", openTestH.Leaderboard)
+	// Admin — faqat admin qo'sha/tahrirlaydi
+	api.Get("/opentests/admin", middleware.Protected(), middleware.RequireRole(models.RoleAdmin), openTestH.ListAdmin)
+	api.Get("/opentests/:id/edit", middleware.Protected(), middleware.RequireRole(models.RoleAdmin), openTestH.GetForEdit)
+	api.Post("/opentests", middleware.Protected(), middleware.RequireRole(models.RoleAdmin), openTestH.Create)
+	api.Put("/opentests/:id", middleware.Protected(), middleware.RequireRole(models.RoleAdmin), openTestH.Update)
+	api.Delete("/opentests/:id", middleware.Protected(), middleware.RequireRole(models.RoleAdmin), openTestH.Delete)
 
 	// ── Doska topshiriqlari ────────────────────────────────────────────────────
 	activities := api.Group("/activities", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin))

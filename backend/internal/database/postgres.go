@@ -89,6 +89,32 @@ func Migrate() {
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		)`,
 		`CREATE INDEX IF NOT EXISTS idx_board_activities_teacher ON board_activities(teacher_id)`,
+		// Ochiq testlar (Qiziqarli/Fan/IQ/Psixologik/Attestatsiya) — admin boshqaradi
+		`CREATE TABLE IF NOT EXISTS open_tests (
+			id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			category    VARCHAR(40) NOT NULL,
+			title       VARCHAR(200) NOT NULL,
+			description TEXT NOT NULL DEFAULT '',
+			scored      BOOLEAN NOT NULL DEFAULT true,
+			questions   JSONB NOT NULL DEFAULT '[]',
+			created_by  UUID REFERENCES users(id) ON DELETE SET NULL,
+			is_published BOOLEAN NOT NULL DEFAULT true,
+			play_count  INT NOT NULL DEFAULT 0,
+			created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+			updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_open_tests_category ON open_tests(category)`,
+		`CREATE TABLE IF NOT EXISTS open_test_results (
+			id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+			test_id     UUID NOT NULL REFERENCES open_tests(id) ON DELETE CASCADE,
+			user_id     UUID REFERENCES users(id) ON DELETE SET NULL,
+			nickname    VARCHAR(100) NOT NULL,
+			score       INT NOT NULL DEFAULT 0,
+			total       INT NOT NULL DEFAULT 0,
+			time_ms     INT NOT NULL DEFAULT 0,
+			created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_open_test_results_test ON open_test_results(test_id)`,
 	}
 
 	for _, stmt := range migrations {
