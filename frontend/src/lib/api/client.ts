@@ -127,8 +127,31 @@ export const classes = {
         request('/api/classes/' + id, { method: 'PUT', body: JSON.stringify(data) }),
 
     delete: (id: string) =>
-        request('/api/classes/' + id, { method: 'DELETE' })
+        request('/api/classes/' + id, { method: 'DELETE' }),
+
+    // O'qituvchi: sinf o'quvchilari
+    students: (id: string) =>
+        request<{ id: string; full_name: string; username: string; email: string; joined_at: string }[]>('/api/classes/' + id + '/students'),
+
+    // Talaba
+    join: (class_code: string) =>
+        request<{ class_id: string; name: string; message: string }>('/api/classes/join', { method: 'POST', body: JSON.stringify({ class_code }) }),
+    my: () =>
+        request<MyClass[]>('/api/classes/my'),
+    leave: (id: string) =>
+        request('/api/classes/' + id + '/leave', { method: 'POST' })
 };
+
+export interface MyClass {
+    id: string;
+    name: string;
+    grade: string | null;
+    subject: string | null;
+    class_code: string;
+    teacher_name: string;
+    student_count: number;
+    created_at: string;
+}
 
 // ─── AI ───────────────────────────────────────────────────────────────────────
 

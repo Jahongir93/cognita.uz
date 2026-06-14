@@ -130,6 +130,12 @@
       ]
     },
     {
+      label: 'SINF',
+      items: [
+        { href: '/dashboard/my-classes', icon: '👨‍🏫', label: 'Sinflarim' },
+      ]
+    },
+    {
       label: 'MENING',
       items: [
         { href: '/dashboard/results',    icon: '🏅', label: 'Natijalarim' },
@@ -152,6 +158,9 @@
     '/dashboard/olympiad':       'Olimpiada',
     '/dashboard/categories':     'Kategoriyalar',
     '/dashboard/classes':        'Sinflar',
+    '/dashboard/my-classes':     'Sinflarim',
+    '/dashboard/open-tests':     'Ochiq testlar',
+    '/dashboard/topshiriqlar':   'Topshiriqlar',
     '/dashboard/reports':        'Hisobotlar',
     '/dashboard/settings':       'Sozlamalar',
     '/dashboard/discovery':      'Discovery',

@@ -15,6 +15,18 @@
     let form = { name: '', grade: '', subject: '' };
     const grades = ['1','2','3','4','5','6','7','8','9','10','11'];
 
+    // O'quvchilar ro'yxati modali
+    let showStudents = false;
+    let studentsClass: ClassItem | null = null;
+    let studentsList: { id: string; full_name: string; username: string; email: string; joined_at: string }[] = [];
+    let studentsLoading = false;
+    async function openStudents(cls: ClassItem) {
+        studentsClass = cls; showStudents = true; studentsLoading = true; studentsList = [];
+        try { studentsList = await classesApi.students(cls.id); } catch { studentsList = []; }
+        studentsLoading = false;
+    }
+    function closeStudents() { showStudents = false; studentsClass = null; }
+
     const gradeHues = [210, 240, 270, 300, 330, 0, 30, 60, 120, 160, 180];
     function gradientForGrade(grade: string): string {
         const idx = parseInt(grade) - 1;
@@ -221,8 +233,11 @@
                     </div>
                     <!-- Actions -->
                     <div class="card-actions">
+                        <button class="action-btn students-btn" on:click={() => openStudents(cls)}>
+                            👥 O'quvchilar
+                        </button>
                         <button class="action-btn edit-btn" on:click={() => openEdit(cls)}>
-                            ✏️ Tahrirlash
+                            ✏️
                         </button>
                         <button class="action-btn delete-btn" on:click={() => del(cls.id, cls.name)}>
                             🗑️
@@ -291,6 +306,42 @@
     </div>
 {/if}
 
+<!-- Students Modal -->
+{#if showStudents}
+    <!-- svelte-ignore a11y-click-events-have-key-events a11y-no-static-element-interactions -->
+    <div class="modal-overlay" on:click|self={closeStudents}>
+        <div class="modal students-modal">
+            <div class="modal-header">
+                <h3>👥 {studentsClass?.name} — o'quvchilar</h3>
+                <button class="modal-close" on:click={closeStudents}>✕</button>
+            </div>
+            <div class="students-body">
+                {#if studentsLoading}
+                    <p class="muted">Yuklanmoqda...</p>
+                {:else if studentsList.length === 0}
+                    <div class="st-empty">
+                        <div class="st-empty-icon">🪑</div>
+                        <p>Hali o'quvchi qo'shilmagan.</p>
+                        <p class="st-empty-sub">Sinf kodi: <strong>{studentsClass?.class_code}</strong> — ulashing!</p>
+                    </div>
+                {:else}
+                    <div class="st-count">{studentsList.length} o'quvchi</div>
+                    {#each studentsList as s, i}
+                        <div class="st-row">
+                            <span class="st-n">{i + 1}</span>
+                            <div class="st-av">{s.full_name?.[0]?.toUpperCase() ?? '?'}</div>
+                            <div class="st-info">
+                                <span class="st-name">{s.full_name}</span>
+                                <span class="st-meta">{s.username || s.email}</span>
+                            </div>
+                        </div>
+                    {/each}
+                {/if}
+            </div>
+        </div>
+    </div>
+{/if}
+
 <!-- Toast -->
 {#if toast}
     <div class="toast" class:toast-err={toastErr}>
@@ -299,6 +350,22 @@
 {/if}
 
 <style>
+    .students-modal { max-width: 440px; }
+    .students-body { padding: 18px 22px 22px; max-height: 60vh; overflow-y: auto; }
+    .muted { color: var(--text3); }
+    .st-count { font-size: 0.8rem; font-weight: 700; color: var(--text3); margin-bottom: 10px; }
+    .st-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+    .st-n { width: 22px; color: var(--text3); font-weight: 700; font-size: 0.85rem; }
+    .st-av { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg,var(--primary),var(--accent,#8b5cf6)); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+    .st-info { display: flex; flex-direction: column; }
+    .st-name { font-weight: 700; color: var(--text); }
+    .st-meta { font-size: 0.76rem; color: var(--text3); }
+    .st-empty { text-align: center; padding: 30px 10px; color: var(--text3); }
+    .st-empty-icon { font-size: 2.6rem; }
+    .st-empty-sub { font-size: 0.82rem; }
+    .students-btn { background: var(--primary-light); color: var(--primary); border-color: transparent; flex: 1; }
+    .students-btn:hover { filter: brightness(0.96); }
+
     /* ── Page Header ─────────────────────────────────────────────────────────── */
     .page-header {
         display: flex; align-items: flex-start; justify-content: space-between;

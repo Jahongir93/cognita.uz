@@ -52,11 +52,17 @@ func Setup(app *fiber.App, db *pgxpool.Pool, hub *ws.Hub) {
 	rooms.Get("/:pin/info", roomH.Info) // Public — for join screen
 
 	// ── Classes ───────────────────────────────────────────────────────────────
+	// Talaba (har qanday login) — sinfga qo'shilish / mening sinflarim / chiqish
+	api.Post("/classes/join", middleware.Protected(), classH.Join)
+	api.Get("/classes/my", middleware.Protected(), classH.MyClasses)
+	api.Post("/classes/:id/leave", middleware.Protected(), classH.Leave)
+
 	classGroup := api.Group("/classes", middleware.Protected(), middleware.RequireRole(models.RoleTeacher, models.RoleAdmin))
 	classGroup.Get("/", classH.List)
 	classGroup.Post("/", classH.Create)
 	classGroup.Put("/:id", classH.Update)
 	classGroup.Delete("/:id", classH.Delete)
+	classGroup.Get("/:id/students", classH.Students)
 
 	// ── Settings ──────────────────────────────────────────────────────────────
 	api.Get("/settings", middleware.Protected(), settingsH.GetAll)
