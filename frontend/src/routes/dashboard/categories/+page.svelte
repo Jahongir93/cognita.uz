@@ -1170,45 +1170,45 @@
         grid-template-columns: 220px 1fr 320px;
     }
 
-    /* ── Sidebar ── */
+    /* ── Sidebar (sahifa ichidagi kategoriya ro'yxati — yorug' panel) ── */
     .sidebar {
-        background: #0a0f1e;
+        background: var(--white);
         display: flex; flex-direction: column;
-        border-right: 1px solid rgba(255,255,255,0.06);
+        border-right: 1px solid var(--border);
     }
     .sidebar-top {
         display: flex; align-items: center; justify-content: space-between;
         padding: 14px 14px 10px;
-        border-bottom: 1px solid rgba(255,255,255,0.06);
+        border-bottom: 1px solid var(--border);
     }
-    .sb-label { font-size: 0.65rem; font-weight: 700; color: #475569; letter-spacing: 0.08em; text-transform: uppercase; }
+    .sb-label { font-size: 0.65rem; font-weight: 700; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; }
     .sb-add-btn {
         width: 24px; height: 24px; border-radius: 6px;
-        background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3);
-        color: #818cf8; font-size: 1rem; line-height: 1;
+        background: var(--primary-light); border: 1px solid rgba(99,102,241,0.25);
+        color: var(--primary); font-size: 1rem; line-height: 1;
         cursor: pointer; display: flex; align-items: center; justify-content: center;
         transition: all 0.15s;
     }
-    .sb-add-btn:hover { background: rgba(99,102,241,0.25); color: #a5b4fc; }
+    .sb-add-btn:hover { background: rgba(99,102,241,0.2); }
 
     .cat-list { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
     .cat-item {
         display: flex; align-items: center; gap: 9px;
         padding: 9px 10px; border-radius: 9px;
         border: none; background: transparent; cursor: pointer;
-        width: 100%; text-align: left; color: #64748b;
+        width: 100%; text-align: left; color: var(--text2);
         transition: all 0.18s; position: relative;
     }
-    .cat-item:hover { color: #cbd5e1; background: rgba(255,255,255,0.04); }
+    .cat-item:hover { color: var(--text); background: var(--bg); }
     .cat-item.active {
-        background: linear-gradient(135deg, color-mix(in srgb,var(--g1) 20%,transparent), color-mix(in srgb,var(--g2) 12%,transparent));
-        box-shadow: inset 3px 0 0 var(--g1); color: #f1f5f9;
+        background: linear-gradient(135deg, color-mix(in srgb,var(--g1) 16%,transparent), color-mix(in srgb,var(--g2) 9%,transparent));
+        box-shadow: inset 3px 0 0 var(--g1); color: var(--text);
     }
     .ci-icon { font-size: 1.15rem; flex-shrink: 0; width: 24px; text-align: center; }
     .ci-info { flex: 1; min-width: 0; }
     .ci-name { display: block; font-size: 0.8rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .ci-count { font-size: 0.66rem; color: #475569; }
-    .cat-item.active .ci-count { color: rgba(255,255,255,0.45); }
+    .ci-count { font-size: 0.66rem; color: var(--text3); }
+    .cat-item.active .ci-count { color: var(--text3); }
     .ci-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--g1); box-shadow: 0 0 8px var(--g1); flex-shrink: 0; }
 
     /* ── Center panel ── */
