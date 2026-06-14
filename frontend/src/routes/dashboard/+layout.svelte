@@ -218,7 +218,7 @@
     <!-- Logo -->
     <div class="sidebar-top">
       <a href="/" class="brand">
-        <img src="/sitelogo.png" alt="Cognita.uz" style="height:32px;width:auto;display:block" />
+        <img src="/logowhite.png" alt="Cognita.uz" style="height:32px;width:auto;display:block" />
       </a>
     </div>
 

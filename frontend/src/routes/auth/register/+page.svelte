@@ -53,7 +53,7 @@
     <!-- Left panel -->
     <div class="left-panel">
         <div class="left-inner">
-            <a href="/" class="brand"><img src="/sitelogo.png" alt="Cognita.uz" style="height:38px;width:auto" /></a>
+            <a href="/" class="brand"><img src="/logowhite.png" alt="Cognita.uz" style="height:38px;width:auto" /></a>
             <div class="lc">
                 <div class="lc-icon">🚀</div>
                 <h2>Boshlang!</h2>

@@ -48,7 +48,7 @@
 <!-- NAV -->
 <nav class="topnav">
   <a href="/" class="brand">
-    <img src="/sitelogo.png" alt="Cognita.uz" style="height:28px;width:auto" />
+    <img src="/logowhite.png" alt="Cognita.uz" style="height:28px;width:auto" />
   </a>
   <div class="nav-right">
     <a href="/" class="back">← Bosh sahifa</a>

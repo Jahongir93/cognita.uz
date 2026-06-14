@@ -396,7 +396,7 @@
 <footer class="footer">
     <div class="footer-inner">
         <div class="footer-left">
-            <div class="footer-brand"><img src="/sitelogo.png" alt="Cognita.uz" style="height:30px;width:auto" /></div>
+            <div class="footer-brand"><img src="/logowhite.png" alt="Cognita.uz" style="height:30px;width:auto" /></div>
             <p>© 2025 Cognita.uz — O'zbekiston maktablari uchun</p>
         </div>
         <div class="footer-links">
