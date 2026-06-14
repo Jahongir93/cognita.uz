@@ -43,6 +43,12 @@
       ]
     },
     {
+      label: 'DOSKA',
+      items: [
+        { href: '/dashboard/topshiriqlar', icon: '🧩', label: 'Topshiriqlar', badge: 'Yangi' },
+      ]
+    },
+    {
       label: 'BOSHQARUV',
       items: [
         { href: '/dashboard/categories', icon: '📂', label: 'Kategoriyalar' },
@@ -72,6 +78,12 @@
         { href: '/dashboard/viktorina',  icon: '🎮', label: 'Viktorina' },
         { href: '/dashboard/exam',       icon: '📋', label: 'Imtihon' },
         { href: '/dashboard/olympiad',   icon: '🏆', label: 'Olimpiada' },
+      ]
+    },
+    {
+      label: 'DOSKA',
+      items: [
+        { href: '/dashboard/topshiriqlar', icon: '🧩', label: 'Topshiriqlar', badge: 'Yangi' },
       ]
     },
     {
