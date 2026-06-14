@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Category, Test } from '$lib/data/categories';
+  import type { Category } from '$lib/data/categories';
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { openTests, type OpenTest } from '$lib/api/client';
@@ -15,43 +15,9 @@
   });
   function solve(t: OpenTest) { goto(`/test/${t.id}`); }
 
-  let search = '';
-  let activeSubcat = 'all';
-  let activeDiff: string = 'all';
-  let showModal = false;
-  let selectedTest: Test | null = null;
-
-  $: filtered = category.tests.filter(t => {
-    const matchSearch =
-      !search ||
-      t.title.toLowerCase().includes(search.toLowerCase()) ||
-      t.description.toLowerCase().includes(search.toLowerCase());
-    const matchSubcat = activeSubcat === 'all' || t.subcat === activeSubcat;
-    const matchDiff = activeDiff === 'all' || t.difficulty === activeDiff;
-    return matchSearch && matchSubcat && matchDiff;
-  });
-
-  $: totalPlays = category.tests.reduce((s, t) => s + t.plays, 0);
-  $: avgRating = (
-    category.tests.reduce((s, t) => s + t.rating, 0) / category.tests.length
-  ).toFixed(1);
-
-  function openTest(t: Test) {
-    selectedTest = t;
-    showModal = true;
-  }
-  function closeModal() {
-    showModal = false;
-    selectedTest = null;
-  }
+  $: apiPlays = apiTests.reduce((s, t) => s + t.play_count, 0);
   function fmtPlays(n: number): string {
     return n >= 1000 ? (n / 1000).toFixed(1) + 'K' : n.toString();
-  }
-  function diffLabel(d: string): string {
-    return d === 'easy' ? 'Oson' : d === 'medium' ? "O'rta" : 'Qiyin';
-  }
-  function diffColor(d: string): string {
-    return d === 'easy' ? '#22c55e' : d === 'medium' ? '#f59e0b' : '#ef4444';
   }
 </script>
 
@@ -83,59 +49,17 @@
     <p>{category.subtitle}</p>
     <div class="stats-row">
       <div class="stat">
-        <span class="stat-num">{category.tests.length}</span>
+        <span class="stat-num">{apiTests.length}</span>
         <span class="stat-lbl">test</span>
       </div>
       <div class="stat-div"></div>
       <div class="stat">
-        <span class="stat-num">{fmtPlays(totalPlays)}</span>
-        <span class="stat-lbl">o'ynalgan</span>
-      </div>
-      <div class="stat-div"></div>
-      <div class="stat">
-        <span class="stat-num">⭐ {avgRating}</span>
-        <span class="stat-lbl">reyting</span>
+        <span class="stat-num">{fmtPlays(apiPlays)}</span>
+        <span class="stat-lbl">yechilgan</span>
       </div>
     </div>
   </div>
 </header>
-
-<!-- CONTROLS -->
-<div class="controls-wrap">
-  <div class="controls">
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input
-        class="search-input"
-        placeholder="Test qidirish..."
-        bind:value={search}
-      />
-    </div>
-    <div class="diff-chips">
-      {#each [['all','Barchasi'],['easy','Oson'],['medium',"O'rta"],['hard','Qiyin']] as [val, lbl]}
-        <button
-          class="chip"
-          class:active={activeDiff === val}
-          on:click={() => activeDiff = val}
-        >{lbl}</button>
-      {/each}
-    </div>
-  </div>
-
-  <!-- SUBCATEGORY TABS -->
-  <div class="subcats">
-    {#each category.subcats as sc}
-      <button
-        class="subcat-btn"
-        class:active={activeSubcat === sc.id}
-        on:click={() => activeSubcat = sc.id}
-      >
-        <span>{sc.icon}</span>
-        <span>{sc.label}</span>
-      </button>
-    {/each}
-  </div>
-</div>
 
 <!-- GRID -->
 <main class="content">
@@ -164,109 +88,7 @@
     <div class="api-empty">Bu bo'limда hali test qo'shilmagan. Tez orada qo'shiladi! 🚀</div>
   {/if}
 
-  {#if filtered.length === 0}
-    <div class="empty">
-      <div class="empty-icon">🔍</div>
-      <p>Hech narsa topilmadi</p>
-      <button class="reset-btn" on:click={() => { search = ''; activeSubcat = 'all'; activeDiff = 'all'; }}>
-        Filterni tozalash
-      </button>
-    </div>
-  {:else}
-    <div class="grid">
-      {#each filtered as test, i}
-        <div
-          class="card"
-          style="--ci:{i};--g1:{category.g1};--g2:{category.g2}"
-          role="button"
-          tabindex="0"
-          on:click={() => openTest(test)}
-          on:keydown={e => e.key === 'Enter' && openTest(test)}
-        >
-          <div class="card-top">
-            <span class="card-icon">{test.icon}</span>
-            <div class="badges">
-              {#if test.isHot}
-                <span class="badge hot">🔥 Mashhur</span>
-              {/if}
-              {#if test.isNew}
-                <span class="badge new-badge">✨ Yangi</span>
-              {/if}
-            </div>
-          </div>
-          <h3 class="card-title">{test.title}</h3>
-          <p class="card-desc">{test.description}</p>
-          <div class="card-meta">
-            <span>⏱ {test.duration} min</span>
-            <span>👤 {fmtPlays(test.plays)} marta</span>
-            <span>⭐ {test.rating}</span>
-          </div>
-          <div class="card-footer">
-            <span class="diff-badge" style="color:{diffColor(test.difficulty)};border-color:{diffColor(test.difficulty)}">
-              {diffLabel(test.difficulty)}
-            </span>
-            <button class="play-btn" on:click|stopPropagation={() => openTest(test)}>
-              Boshlash ▶
-            </button>
-          </div>
-        </div>
-      {/each}
-    </div>
-  {/if}
 </main>
-
-<!-- MODAL -->
-{#if showModal && selectedTest}
-  <div
-    class="overlay"
-    role="button"
-    tabindex="-1"
-    aria-label="Yopish"
-    on:click={closeModal}
-    on:keydown={e => e.key === 'Escape' && closeModal()}
-  >
-    <div
-      class="modal"
-      role="dialog"
-      aria-modal="true"
-      on:click|stopPropagation
-      on:keydown|stopPropagation
-    >
-      <button class="modal-close" on:click={closeModal} aria-label="Yopish">✕</button>
-      <div class="modal-icon">{selectedTest.icon}</div>
-      <h2 class="modal-title">{selectedTest.title}</h2>
-      <p class="modal-desc">{selectedTest.description}</p>
-      <div class="modal-rows">
-        <div class="modal-row">
-          <span class="modal-lbl">Qiyinlik</span>
-          <span class="modal-val" style="color:{diffColor(selectedTest.difficulty)}">
-            {diffLabel(selectedTest.difficulty)}
-          </span>
-        </div>
-        <div class="modal-row">
-          <span class="modal-lbl">Savollar</span>
-          <span class="modal-val">{selectedTest.questions} ta</span>
-        </div>
-        <div class="modal-row">
-          <span class="modal-lbl">Vaqt</span>
-          <span class="modal-val">{selectedTest.duration} daqiqa</span>
-        </div>
-        <div class="modal-row">
-          <span class="modal-lbl">O'ynalgan</span>
-          <span class="modal-val">{fmtPlays(selectedTest.plays)} marta</span>
-        </div>
-        <div class="modal-row">
-          <span class="modal-lbl">Reyting</span>
-          <span class="modal-val">⭐ {selectedTest.rating}</span>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="btn-close" on:click={closeModal}>Yopish</button>
-        <button class="btn-play" disabled>O'ynash (tez kunda)</button>
-      </div>
-    </div>
-  </div>
-{/if}
 
 <style>
   :global(body) {

@@ -51,8 +51,7 @@
     {
       label: 'BOSHQARUV',
       items: [
-        { href: '/dashboard/open-tests', icon: '📂', label: 'Ochiq testlar', badge: 'Yangi' },
-        { href: '/dashboard/categories', icon: '🗂️', label: 'Kategoriyalar' },
+        { href: '/dashboard/open-tests', icon: '📂', label: 'Katalog' },
         { href: '/dashboard/classes',    icon: '👨‍🏫', label: 'Sinflar' },
         { href: '/dashboard/reports',    icon: '📈', label: 'Hisobotlar' },
       ]
@@ -156,10 +155,9 @@
     '/dashboard/viktorina':      'Viktorina',
     '/dashboard/exam':           'Imtihon rejimi',
     '/dashboard/olympiad':       'Olimpiada',
-    '/dashboard/categories':     'Kategoriyalar',
     '/dashboard/classes':        'Sinflar',
     '/dashboard/my-classes':     'Sinflarim',
-    '/dashboard/open-tests':     'Ochiq testlar',
+    '/dashboard/open-tests':     'Katalog',
     '/dashboard/topshiriqlar':   'Topshiriqlar',
     '/dashboard/reports':        'Hisobotlar',
     '/dashboard/settings':       'Sozlamalar',

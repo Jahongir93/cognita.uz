@@ -80,8 +80,8 @@
     }
 
     function openCatGameModal(test: Test) {
-        // Category tests are demo — navigate to categories page
-        goto('/dashboard/categories');
+        // Katalog (ochiq testlar) sahifasiga yo'naltirish
+        goto('/dashboard/open-tests');
     }
 
     function closeModal() { showGameModal = false; }

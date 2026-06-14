@@ -126,7 +126,7 @@
 <svelte:head><title>{editId ? 'Test tahrirlash' : 'Yangi test'} — Cognita.uz</title></svelte:head>
 
 <div class="page">
-    <a href="/dashboard/open-tests" class="back">← Ochiq testlar</a>
+    <a href="/dashboard/open-tests" class="back">← Katalog</a>
     <h1>{editId ? 'Testni tahrirlash' : 'Yangi test'}</h1>
 
     {#if loaded}

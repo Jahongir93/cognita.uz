@@ -38,13 +38,13 @@
     $: catLabel = CATS.find(c => c.id === activeCat)?.label ?? '';
 </script>
 
-<svelte:head><title>Ochiq testlar — Cognita.uz Admin</title></svelte:head>
+<svelte:head><title>Katalog — Cognita.uz Admin</title></svelte:head>
 
 <div class="page">
     <div class="page-header">
         <div>
-            <h1>📂 Ochiq testlar</h1>
-            <p class="sub">Saytdagi test kategoriyalarini boshqaring. Faqat admin qo'sha oladi. Foydalanuvchilar istalgan vaqt yechadi.</p>
+            <h1>📂 Katalog</h1>
+            <p class="sub">Test katalogini boshqaring (Qiziqarli, Fan, IQ, Attestatsiya, Psixologik). Faqat admin qo'sha oladi. Foydalanuvchilar istalgan vaqt yechadi.</p>
         </div>
         <button class="btn pri" on:click={create}>＋ Yangi test</button>
     </div>
