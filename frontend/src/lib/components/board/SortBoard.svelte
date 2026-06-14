@@ -40,7 +40,14 @@
 
 <div class="wrap">
     {#if done}
-        <div class="win"><div class="we">🎉</div><h1>Hammasi to'g'ri ajratildi!</h1><button class="big-btn" on:click={build}>↻ Qaytadan</button></div>
+        <div class="win">
+            <div class="win-art">
+                <img src="/img/board/star-burst.png" alt="" class="win-burst" />
+                <img src="/img/board/cogni-trophy.png" alt="" class="win-cogni" />
+            </div>
+            <h1>Hammasi to'g'ri ajratildi!</h1>
+            <button class="big-btn" on:click={build}>↻ Qaytadan</button>
+        </div>
     {:else}
         <div class="pool">
             {#each pool as x (x.i)}
@@ -90,8 +97,11 @@
     .placed { background: #dcfce7; color: #16a34a; padding: 8px 14px; border-radius: 10px; font-weight: 700; font-size: clamp(0.85rem,1.6vw,1.2rem); animation: drop 0.3s ease; }
     @keyframes drop { from{transform:scale(0.5);opacity:0;} to{transform:scale(1);opacity:1;} }
     .win { margin: auto; text-align: center; }
-    .we { font-size: 5rem; animation: bob 1.6s ease-in-out infinite; }
+    .win-art { position: relative; width: 260px; height: 260px; margin: 0 auto 6px; }
+    .win-burst { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; animation: spinSlow 12s linear infinite; opacity: 0.9; }
+    .win-cogni { position: absolute; inset: 0; margin: auto; width: 70%; height: 70%; object-fit: contain; animation: bob 1.8s ease-in-out infinite; }
     @keyframes bob { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+    @keyframes spinSlow { to { transform: rotate(360deg); } }
     .win h1 { font-size: 2.4rem; margin: 10px 0 24px; }
     .big-btn { padding: 16px 48px; border: none; border-radius: 16px; cursor: pointer; background: linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; font-size: 1.4rem; font-weight: 800; box-shadow: 0 8px 24px rgba(99,102,241,0.5); }
 </style>

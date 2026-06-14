@@ -78,9 +78,10 @@
         min-height: 100dvh;
         display: flex;
         flex-direction: column;
-        background: radial-gradient(circle at 15% 10%, #1e2a52 0%, transparent 50%),
-                    radial-gradient(circle at 85% 90%, #3b1e52 0%, transparent 50%),
-                    #0b1220;
+        background:
+            linear-gradient(rgba(11,18,32,0.85), rgba(11,18,32,0.92)),
+            url('/img/board/board-bg-default.png') center / cover no-repeat fixed,
+            #0b1220;
         font-family: 'Segoe UI', system-ui, sans-serif;
         color: #f1f5f9;
     }

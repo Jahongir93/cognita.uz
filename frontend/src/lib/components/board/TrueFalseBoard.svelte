@@ -26,7 +26,10 @@
 
 {#if finished}
     <div class="done">
-        <div class="done-emoji">🎉</div>
+        <div class="done-art">
+            <img src="/img/board/star-burst.png" alt="" class="done-burst" />
+            <img src="/img/board/cogni-trophy.png" alt="" class="done-cogni" />
+        </div>
         <h1>Yakunlandi!</h1>
         <p class="done-score">{score} / {statements.length} to'g'ri</p>
         <button class="big-btn" on:click={restart}>↻ Qaytadan</button>
@@ -47,11 +50,22 @@
         <div class="footer">
             {#if revealed}<button class="big-btn" on:click={next}>{idx < statements.length - 1 ? 'Keyingi →' : 'Yakunlash'}</button>{/if}
         </div>
+
+        {#if revealed}
+            <img class="reaction" alt="" src="/img/board/{picked === s.answer ? 'cogni-happy' : 'cogni-oops'}.png" />
+        {/if}
     </div>
 {/if}
 
 <style>
-    .tf { flex: 1; display: flex; flex-direction: column; width: 100%; padding: 24px clamp(16px,5vw,80px); box-sizing: border-box; }
+    .tf { flex: 1; display: flex; flex-direction: column; width: 100%; padding: 24px clamp(16px,5vw,80px); box-sizing: border-box; position: relative; overflow: hidden; }
+    .reaction {
+        position: absolute; right: 18px; bottom: 18px;
+        width: clamp(90px, 14vw, 160px); height: auto;
+        filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4));
+        animation: reactIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both; pointer-events: none;
+    }
+    @keyframes reactIn { from { opacity: 0; transform: translateY(40px) scale(0.7); } to { opacity: 1; transform: none; } }
     .qbar { display: flex; justify-content: space-between; font-size: 1.1rem; font-weight: 700; color: #94a3b8; }
     .sc { color: #fbbf24; }
     .card {
@@ -80,8 +94,11 @@
     .footer { display: flex; justify-content: center; min-height: 70px; align-items: center; margin-top: 18px; }
     .big-btn { padding: 16px 48px; border: none; border-radius: 16px; cursor: pointer; background: linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff; font-size: 1.4rem; font-weight: 800; box-shadow: 0 8px 24px rgba(99,102,241,0.5); }
     .done { margin: auto; text-align: center; }
-    .done-emoji { font-size: 5rem; animation: bob 1.6s ease-in-out infinite; }
+    .done-art { position: relative; width: 280px; height: 280px; margin: 0 auto 8px; }
+    .done-burst { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; animation: spinSlow 12s linear infinite; opacity: 0.9; }
+    .done-cogni { position: absolute; inset: 0; margin: auto; width: 70%; height: 70%; object-fit: contain; animation: bob 1.8s ease-in-out infinite; }
     @keyframes bob { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+    @keyframes spinSlow { to { transform: rotate(360deg); } }
     .done h1 { font-size: 2.6rem; margin: 8px 0; }
     .done-score { font-size: 1.6rem; color: #fbbf24; font-weight: 800; margin-bottom: 24px; }
 </style>

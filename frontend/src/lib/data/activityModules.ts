@@ -27,6 +27,7 @@ export interface ActivityModule {
     name: string;
     desc: string;
     icon: string;
+    image?: string;        // ic-*.png (faqat implemented bo'lganlarда)
     kind: ContentKind;
     player?: PlayerKind;   // faqat implemented bo'lsa
     implemented: boolean;
@@ -34,15 +35,15 @@ export interface ActivityModule {
 }
 
 export const ACTIVITY_MODULES: ActivityModule[] = [
-    { num: 1,  id: 'anagram',        name: 'Harflarni tartiblash',     desc: 'Aralash harflardan so\'zni tiklash',              icon: '🔤', kind: 'words',     player: 'anagram',    implemented: true,  category: 'So\'z' },
-    { num: 2,  id: 'wheel',          name: 'G\'ildirakni aylantirish', desc: 'Tasodifiy savol/topshiriqni tanlash',           icon: '🎡', kind: 'prompts',   player: 'wheel',      implemented: true,  category: 'Tasodif' },
-    { num: 3,  id: 'open-box',       name: 'Qutini ochish',            desc: 'Qutilarni ochib topshiriqni bajarish',          icon: '🎁', kind: 'prompts',   player: 'box',        implemented: true,  category: 'Tasodif' },
+    { num: 1,  id: 'anagram',        name: 'Harflarni tartiblash',     desc: 'Aralash harflardan so\'zni tiklash',              icon: '🔤', kind: 'words',     player: 'anagram', image: 'ic-anagram.png',    implemented: true,  category: 'So\'z' },
+    { num: 2,  id: 'wheel',          name: 'G\'ildirakni aylantirish', desc: 'Tasodifiy savol/topshiriqni tanlash',           icon: '🎡', kind: 'prompts',   player: 'wheel', image: 'ic-wheel.png',      implemented: true,  category: 'Tasodif' },
+    { num: 3,  id: 'open-box',       name: 'Qutini ochish',            desc: 'Qutilarni ochib topshiriqni bajarish',          icon: '🎁', kind: 'prompts',   player: 'box', image: 'ic-openbox.png',        implemented: true,  category: 'Tasodif' },
     { num: 4,  id: 'unjumble',       name: 'Gapni tartibga keltirish', desc: 'Gap bo\'laklarini to\'g\'ri tartibga solish',   icon: '🧱', kind: 'sequence',  implemented: false, category: 'So\'z' },
-    { num: 5,  id: 'matching-pairs', name: 'Mos juftliklarni topish',  desc: 'Mos kartochkalarni xotiradan topish',           icon: '🃏', kind: 'pairs',     player: 'memory',     implemented: true,  category: 'Moslashtirish' },
-    { num: 6,  id: 'quiz',           name: 'Viktorina',                desc: 'Variantlardan to\'g\'ri javobni tanlash',       icon: '❓', kind: 'quiz',      player: 'quiz',       implemented: true,  category: 'Savol-javob' },
-    { num: 7,  id: 'group-sort',     name: 'Guruhlarga ajratish',      desc: 'Elementlarni to\'g\'ri guruhga ajratish',       icon: '🗂️', kind: 'groups',    player: 'sort',       implemented: true,  category: 'Saralash' },
+    { num: 5,  id: 'matching-pairs', name: 'Mos juftliklarni topish',  desc: 'Mos kartochkalarni xotiradan topish',           icon: '🃏', kind: 'pairs',     player: 'memory', image: 'ic-matching.png',     implemented: true,  category: 'Moslashtirish' },
+    { num: 6,  id: 'quiz',           name: 'Viktorina',                desc: 'Variantlardan to\'g\'ri javobni tanlash',       icon: '❓', kind: 'quiz',      player: 'quiz', image: 'ic-quiz.png',       implemented: true,  category: 'Savol-javob' },
+    { num: 7,  id: 'group-sort',     name: 'Guruhlarga ajratish',      desc: 'Elementlarni to\'g\'ri guruhga ajratish',       icon: '🗂️', kind: 'groups',    player: 'sort', image: 'ic-groupsort.png',       implemented: true,  category: 'Saralash' },
     { num: 8,  id: 'match-up',       name: 'Moslashtirish',            desc: 'Atama va ta\'rifni bog\'lash',                  icon: '🔗', kind: 'pairs',     implemented: false, category: 'Moslashtirish' },
-    { num: 9,  id: 'flashcards',     name: 'Kartochkalar',             desc: 'Old/orqa tomonli bilim kartochkalari',          icon: '📇', kind: 'pairs',     player: 'flashcards', implemented: true,  category: 'Moslashtirish' },
+    { num: 9,  id: 'flashcards',     name: 'Kartochkalar',             desc: 'Old/orqa tomonli bilim kartochkalari',          icon: '📇', kind: 'pairs',     player: 'flashcards', image: 'ic-flashcards.png', implemented: true,  category: 'Moslashtirish' },
     { num: 10, id: 'speaking-cards', name: 'Nutq kartochkalari',       desc: 'Tasodifiy kartochka asosida gapirish',          icon: '🗣️', kind: 'prompts',   implemented: false, category: 'Tasodif' },
     { num: 11, id: 'complete-sentence', name: 'Gapni to\'ldirish',     desc: 'Bo\'sh joylarga mos so\'z qo\'yish',            icon: '✏️', kind: 'fillblank', implemented: false, category: 'So\'z' },
     { num: 12, id: 'find-match',     name: 'Mos javobni topish',       desc: 'To\'g\'ri javobni tanlab, noto\'g\'rini o\'chirish', icon: '🎯', kind: 'quiz',  implemented: false, category: 'Savol-javob' },
@@ -55,7 +56,7 @@ export const ACTIVITY_MODULES: ActivityModule[] = [
     { num: 19, id: 'spell-word',     name: 'So\'zni yozish',           desc: 'Harflardan so\'z tuzish',                       icon: '📝', kind: 'words',     implemented: false, category: 'So\'z' },
     { num: 20, id: 'crossword',      name: 'Krossvord',                desc: 'Izohlar asosida krossvord to\'ldirish',         icon: '🧩', kind: 'words',     implemented: false, category: 'So\'z' },
     { num: 21, id: 'maze-chase',     name: 'Labirint quvish',          desc: 'To\'g\'ri javob tomon harakatlanish',           icon: '👾', kind: 'quiz',      implemented: false, category: 'Harakatli' },
-    { num: 22, id: 'true-false',     name: 'To\'g\'ri yoki noto\'g\'ri', desc: 'Fikr to\'g\'ri yoki noto\'g\'riligini aniqlash', icon: '✅', kind: 'truefalse', player: 'truefalse', implemented: true,  category: 'Savol-javob' },
+    { num: 22, id: 'true-false',     name: 'To\'g\'ri yoki noto\'g\'ri', desc: 'Fikr to\'g\'ri yoki noto\'g\'riligini aniqlash', icon: '✅', kind: 'truefalse', player: 'truefalse', image: 'ic-truefalse.png', implemented: true,  category: 'Savol-javob' },
     { num: 23, id: 'flying-answers', name: 'Uchuvchi javoblar',        desc: 'Harakatlanayotgan to\'g\'ri javobni tanlash',   icon: '🛸', kind: 'quiz',      implemented: false, category: 'Harakatli' },
     { num: 24, id: 'balloon-pop',    name: 'Sharlarni yorish',         desc: 'Sharlarni yorib javobni moslashtirish',         icon: '🎈', kind: 'groups',    implemented: false, category: 'Harakatli' },
     { num: 25, id: 'matching-game',  name: 'Juftmi yoki juft emasmi',  desc: 'Ikki karta mosligini aniqlash',                 icon: '⚖️', kind: 'pairs',     implemented: false, category: 'Moslashtirish' },

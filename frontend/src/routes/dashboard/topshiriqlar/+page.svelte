@@ -37,6 +37,7 @@
     }
     function moduleName(type: string) { return getModule(type)?.name ?? type; }
     function moduleIcon(type: string) { return getModule(type)?.icon ?? '🧩'; }
+    function moduleImage(type: string) { return getModule(type)?.image; }
 </script>
 
 <svelte:head><title>Topshiriqlar — Cognita.uz</title></svelte:head>
@@ -56,7 +57,11 @@
             <div class="my-grid">
                 {#each myActivities as a (a.id)}
                     <div class="my-card">
-                        <div class="my-icon">{moduleIcon(a.type)}</div>
+                        {#if moduleImage(a.type)}
+                            <img src="/img/board/{moduleImage(a.type)}" alt="" class="my-icon-img" />
+                        {:else}
+                            <div class="my-icon">{moduleIcon(a.type)}</div>
+                        {/if}
                         <div class="my-info">
                             <div class="my-name">{a.title}</div>
                             <div class="my-type">{moduleName(a.type)}</div>
@@ -90,7 +95,11 @@
                     disabled={!m.implemented}
                     on:click={() => m.implemented && createNew(m.id)}
                 >
-                    <span class="mod-icon">{m.icon}</span>
+                    {#if m.image}
+                        <img src="/img/board/{m.image}" alt="" class="mod-icon-img" />
+                    {:else}
+                        <span class="mod-icon">{m.icon}</span>
+                    {/if}
                     <span class="mod-name">{m.name}</span>
                     <span class="mod-desc">{m.desc}</span>
                     {#if !m.implemented}
@@ -162,6 +171,8 @@
     }
     .mod-card.soon { opacity: 0.6; cursor: not-allowed; }
     .mod-icon { font-size: 2rem; }
+    .mod-icon-img { width: 52px; height: 52px; object-fit: contain; display: block; }
+    .my-icon-img { width: 40px; height: 40px; object-fit: contain; flex-shrink: 0; }
     .mod-name { font-weight: 800; color: var(--text); font-size: 0.95rem; }
     .mod-desc { font-size: 0.76rem; color: var(--text3); line-height: 1.3; }
     .soon-badge, .ready-badge {
