@@ -30,17 +30,6 @@
         opacity: 0.12 + Math.random() * 0.15,
     }));
 
-    // Live game simulation
-    const demoOptions = [
-        { shape: '▲', color: '#e21b3c', label: "Samarqand" },
-        { shape: '◆', color: '#1368ce', label: "Toshkent", correct: true },
-        { shape: '●', color: '#d89e00', label: "Buxoro" },
-        { shape: '■', color: '#26890c', label: "Namangan" },
-    ];
-    let selectedOpt = -1;
-    let showCorrect = false;
-    let demoAnswered = 14;
-
     function easeOutCubic(t: number) { return 1 - Math.pow(1 - t, 3); }
 
     function animateCounter(setter: (v: number) => void, target: number, duration = 2000) {
@@ -66,16 +55,6 @@
             }, 350);
         }, 2600);
 
-        // Demo game animation
-        const gameTimer = setInterval(() => {
-            if (!showCorrect) {
-                selectedOpt = 1; // Toshkent
-                demoAnswered = Math.min(23, demoAnswered + 1);
-                setTimeout(() => { showCorrect = true; selectedOpt = -1; }, 1200);
-                setTimeout(() => { showCorrect = false; demoAnswered = 10; }, 3500);
-            }
-        }, 5000);
-
         // Scroll
         const onScroll = () => { scrolled = window.scrollY > 20; };
         window.addEventListener('scroll', onScroll, { passive: true });
@@ -100,7 +79,6 @@
 
         return () => {
             clearInterval(wordTimer);
-            clearInterval(gameTimer);
             window.removeEventListener('scroll', onScroll);
             io.disconnect();
         };
@@ -207,49 +185,10 @@
         <!-- Right: live game mockup -->
         <div class="hero-right" aria-hidden="true">
             <div class="mockup-wrap">
-                <!-- Glow ring behind card -->
+                <!-- Glow ring behind illustration -->
                 <div class="card-glow"></div>
 
-                <div class="game-card">
-                    <div class="gc-bar">
-                        <span class="gc-qn">2 / 10</span>
-                        <div class="gc-timer">
-                            <svg viewBox="0 0 36 36">
-                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="3"/>
-                                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#fbbf24" stroke-width="3"
-                                    stroke-dasharray="62 38" stroke-dashoffset="25"
-                                    style="animation:timerShrink 12s linear infinite"/>
-                            </svg>
-                            <span>12</span>
-                        </div>
-                        <span class="gc-pts">⭐ 500</span>
-                    </div>
-
-                    <p class="gc-q">O'zbekistonning poytaxti qaysi shahar?</p>
-
-                    <div class="gc-grid">
-                        {#each demoOptions as opt, i}
-                            <button
-                                class="gc-opt"
-                                class:gc-sel={selectedOpt === i}
-                                class:gc-correct={showCorrect && opt.correct}
-                                class:gc-wrong={showCorrect && selectedOpt === i && !opt.correct}
-                                style="--c:{opt.color}"
-                            >
-                                <span class="gc-sh">{opt.shape}</span>
-                                <span class="gc-lbl">{opt.label}</span>
-                                {#if showCorrect && opt.correct}<span class="gc-ck">✓</span>{/if}
-                            </button>
-                        {/each}
-                    </div>
-
-                    <div class="gc-progress">
-                        <div class="gc-track">
-                            <div class="gc-fill" style="width:{Math.round(demoAnswered/23*100)}%"></div>
-                        </div>
-                        <span>{demoAnswered} / 23 javob berdi</span>
-                    </div>
-                </div>
+                <img src="/img/hero-main.png" alt="O'qituvchi va o'quvchilar interaktiv darsда" class="hero-illu" />
 
                 <!-- Floating result pop-ups -->
                 <div class="pop p1">✅ +450 ball</div>
@@ -306,16 +245,16 @@
 
         <div class="feat-grid">
             {#each [
-                { icon:'⚡', grad:'#6366f1,#8b5cf6', title:'Live Multiplayer',     desc:'Real-time o\'yin rejimi. Barcha o\'quvchilar bir vaqtda qatnashadi, leaderboard jonli yangilanadi.', tag:'Asosiy' },
-                { icon:'🤖', grad:'#f59e0b,#ef4444', title:'AI Savol Generatori', desc:'Mavzu va sinf darajasini kiriting — Groq AI bir zumda 10-20 savol tayyorlaydi.',          tag:'Yangi' },
-                { icon:'📊', grad:'#22c55e,#16a34a', title:'Batafsil Hisobotlar',  desc:'Har bir o\'quvchi, sinf va savol bo\'yicha to\'liq analitika. Zaif tomonlarni aniqlang.',  tag:'' },
-                { icon:'🎯', grad:'#06b6d4,#3b82f6', title:'Ko\'p O\'yin Rejimlari',desc:'Classic, Team, Confidence, Zero Stakes — har darsga mos rejim tanlang.',               tag:'' },
-                { icon:'🃏', grad:'#ec4899,#f43f5e', title:'Plickers Uslubi',      desc:'O\'quvchilar telefonsiz ham ishtirok eta oladi. Qog\'oz kartochkalar bilan ham ishlaydi.',tag:'' },
-                { icon:'📚', grad:'#a855f7,#6366f1', title:'Uy Vazifalari',         desc:'Vaqtni belgilang, o\'quvchilar o\'z temp\'larida ishlaydi. Natijalar avtomatik yig\'iladi.',tag:'' },
+                { img:'feat-live.png',     grad:'#6366f1,#8b5cf6', title:'Live Multiplayer',     desc:'Real-time o\'yin rejimi. Barcha o\'quvchilar bir vaqtda qatnashadi, leaderboard jonli yangilanadi.', tag:'Asosiy' },
+                { img:'feat-ai.png',       grad:'#f59e0b,#ef4444', title:'AI Savol Generatori', desc:'Mavzu va sinf darajasini kiriting — Groq AI bir zumda 10-20 savol tayyorlaydi.',          tag:'Yangi' },
+                { img:'feat-reports.png',  grad:'#22c55e,#16a34a', title:'Batafsil Hisobotlar',  desc:'Har bir o\'quvchi, sinf va savol bo\'yicha to\'liq analitika. Zaif tomonlarni aniqlang.',  tag:'' },
+                { img:'feat-modes.png',    grad:'#06b6d4,#3b82f6', title:'Ko\'p O\'yin Rejimlari',desc:'Classic, Mustaqil, Jamoaviy — har darsga mos rejim tanlang.',                           tag:'' },
+                { img:'feat-plickers.png', grad:'#ec4899,#f43f5e', title:'Doska o\'yinlari',     desc:'34 ta interaktiv doska o\'yini — o\'quvchilar elektron doskada ishlaydi.',                tag:'' },
+                { img:'feat-homework.png', grad:'#a855f7,#6366f1', title:'Uy Vazifalari',         desc:'Vaqtni belgilang, o\'quvchilar o\'z temp\'larida ishlaydi. Natijalar avtomatik yig\'iladi.',tag:'' },
             ] as f, i}
                 <div class="feat-card" class:visible={featVisible} style="--fd:{i * 80}ms">
-                    <div class="feat-icon" style="--g:linear-gradient(135deg,{f.grad})">
-                        {f.icon}
+                    <div class="feat-icon">
+                        <img src="/img/{f.img}" alt="" class="feat-img" loading="lazy" />
                         {#if f.tag}<span class="feat-tag">{f.tag}</span>{/if}
                     </div>
                     <h3>{f.title}</h3>
@@ -339,7 +278,7 @@
                     <span class="step-num">01</span>
                     <div class="step-ring"></div>
                 </div>
-                <div class="step-icon">✏️</div>
+                <img src="/img/step-create.png" alt="" class="step-img" loading="lazy" />
                 <h3>Quiz yarating</h3>
                 <p>Savollarni qo'lda kiriting yoki AI yordamida avtomatik yarating. Rasm, video qo'shish mumkin.</p>
             </div>
@@ -352,7 +291,7 @@
                     <span class="step-num">02</span>
                     <div class="step-ring" style="animation-delay:0.5s"></div>
                 </div>
-                <div class="step-icon">📱</div>
+                <img src="/img/step-share.png" alt="" class="step-img" loading="lazy" />
                 <h3>PIN ulashing</h3>
                 <p>O'quvchilar cognita.uz/join ga kirib PIN kodni tераdilar. Qurilma farqi yo'q.</p>
             </div>
@@ -365,7 +304,7 @@
                     <span class="step-num">03</span>
                     <div class="step-ring" style="animation-delay:1s"></div>
                 </div>
-                <div class="step-icon">🏆</div>
+                <img src="/img/step-play.png" alt="" class="step-img" loading="lazy" />
                 <h3>O'ynang!</h3>
                 <p>Jonli leaderboard, ball tizimi, streak bonuslari. O'rganish hech qachon bu qadar qiziqarli bo'lmagan.</p>
             </div>
@@ -382,16 +321,16 @@
 
         <div class="cat-grid">
             {#each [
-                { href:'/tests/fun',         icon:'🎯', g:'#f59e0b,#ef4444', title:'Qiziqarli testlar',   desc:"Ko'ngil ochish, shaxsiyat va qiziqarli faktlar",      cnt:'120+ test'  },
-                { href:'/tests/subjects',    icon:'📚', g:'#3b82f6,#6366f1', title:'Fan testlari',         desc:'Matematika, Fizika, Kimyo, Tarix va boshqa fanlar',   cnt:'500+ test'  },
-                { href:'/tests/attestation', icon:'📋', g:'#22c55e,#0ea5e9', title:'Attestatsiya',          desc:"O'qituvchilar uchun attestatsiya tayyorgarligi",       cnt:'200+ savol' },
-                { href:'/tests/iq',          icon:'🧠', g:'#8b5cf6,#6366f1', title:'IQ testlar',            desc:'Mantiq, xotira va aqliy qobiliyat testlari',          cnt:'50+ test'   },
-                { href:'/tests/psychology',  icon:'🧘', g:'#ec4899,#8b5cf6', title:'Psixologik testlar',   desc:"Shaxsiyat, his-tuyg'u va xarakter tahlili",           cnt:'80+ test'   },
-                { href:'/games',             icon:'🎮', g:'#f59e0b,#22c55e', title:"O'yinlar",              desc:"So'z topish, krossvord, sudoku va boshqa o'yinlar",    cnt:"30+ o'yin"  },
+                { href:'/tests/fun',         img:'cat-fun.png',         g:'#f59e0b,#ef4444', title:'Qiziqarli testlar',   desc:"Ko'ngil ochish, shaxsiyat va qiziqarli faktlar",      cnt:'120+ test'  },
+                { href:'/tests/subjects',    img:'cat-subjects.png',    g:'#3b82f6,#6366f1', title:'Fan testlari',         desc:'Matematika, Fizika, Kimyo, Tarix va boshqa fanlar',   cnt:'500+ test'  },
+                { href:'/tests/attestation', img:'cat-attestation.png', g:'#22c55e,#0ea5e9', title:'Attestatsiya',          desc:"O'qituvchilar uchun attestatsiya tayyorgarligi",       cnt:'200+ savol' },
+                { href:'/tests/iq',          img:'cat-iq.png',          g:'#8b5cf6,#6366f1', title:'IQ testlar',            desc:'Mantiq, xotira va aqliy qobiliyat testlari',          cnt:'50+ test'   },
+                { href:'/tests/psychology',  img:'cat-psychology.png',  g:'#ec4899,#8b5cf6', title:'Psixologik testlar',   desc:"Shaxsiyat, his-tuyg'u va xarakter tahlili",           cnt:'80+ test'   },
+                { href:'/games',             img:'cat-games.png',       g:'#f59e0b,#22c55e', title:"O'yinlar",              desc:"So'z topish, krossvord, sudoku va boshqa o'yinlar",    cnt:"30+ o'yin"  },
             ] as c, i}
                 <a href={c.href} class="cat-card" style="--i:{i};--g:{c.g}">
                     <div class="cat-icon-wrap">
-                        <span class="cat-emoji">{c.icon}</span>
+                        <img src="/img/{c.img}" alt="" class="cat-img" loading="lazy" />
                         <div class="cat-icon-bg"></div>
                     </div>
                     <div class="cat-body">
@@ -436,6 +375,7 @@
         {/each}
     </div>
     <div class="cta-inner">
+        <img src="/img/mascot.png" alt="" class="cta-mascot" />
         <div class="cta-badge">🎉 Bugun 500+ o'qituvchi foydalanmoqda</div>
         <h2 class="cta-title">Darsni sehrga aylantiring</h2>
         <p class="cta-sub">Ro'yxatdan o'tish bir daqiqa, birinchi quiz yaratish esa uch daqiqa oladi.</p>
@@ -691,6 +631,16 @@
         0%,100% { opacity: 0.6; transform: scale(1); }
         50%      { opacity: 1; transform: scale(1.08); }
     }
+    .hero-illu {
+        position: relative; z-index: 1;
+        width: 100%; height: auto; display: block;
+        filter: drop-shadow(0 24px 50px rgba(0,0,0,0.35));
+        animation: heroFloat 6s ease-in-out infinite;
+    }
+    @keyframes heroFloat {
+        0%,100% { transform: translateY(0) rotate(-0.5deg); }
+        50%     { transform: translateY(-16px) rotate(0.5deg); }
+    }
     .game-card {
         position: relative; z-index: 1;
         background: linear-gradient(160deg, #1e293b, #0f172a);
@@ -824,13 +774,11 @@
     .feat-card:hover { box-shadow: 0 24px 56px rgba(99,102,241,0.13); border-color: rgba(99,102,241,0.25); transform: translateY(-8px) !important; }
     .feat-card:hover::before { opacity: 1; }
     .feat-icon {
-        width: 56px; height: 56px; border-radius: 16px;
-        background: var(--g); display: flex; align-items: center; justify-content: center;
-        font-size: 1.5rem; margin-bottom: 18px; position: relative;
-        box-shadow: 0 8px 24px rgba(99,102,241,0.25);
+        width: 88px; height: 88px; margin-bottom: 16px; position: relative;
         transition: transform 0.3s;
     }
-    .feat-card:hover .feat-icon { transform: scale(1.1) rotate(-5deg); }
+    .feat-img { width: 100%; height: 100%; object-fit: contain; display: block; }
+    .feat-card:hover .feat-icon { transform: scale(1.08) rotate(-4deg); }
     .feat-tag {
         position: absolute; top: -6px; right: -10px;
         background: #ef4444; color: white; font-size: 0.6rem; font-weight: 800;
@@ -874,6 +822,8 @@
         100% { transform: scale(1.8); opacity: 0; }
     }
     .step-icon { font-size: 2.2rem; margin-bottom: 14px; display: block; }
+    .step-img { width: 130px; height: 130px; object-fit: contain; margin: 0 auto 14px; display: block; transition: transform .3s cubic-bezier(.34,1.56,.64,1); }
+    .step-card:hover .step-img { transform: scale(1.08) translateY(-4px); }
     .step-card h3 { font-size: 1.1rem; font-weight: 700; color: #0f172a; margin: 0 0 10px; }
     .step-card p  { font-size: 0.86rem; color: #64748b; line-height: 1.65; margin: 0; }
     .step-connector { flex-shrink: 0; width: 60px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
@@ -935,6 +885,11 @@
         100% { height: 120px; opacity: 0; bottom: 100%; }
     }
     .cta-inner { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+    .cta-mascot {
+        width: 130px; height: 130px; object-fit: contain; display: block; margin: 0 auto 8px;
+        filter: drop-shadow(0 12px 24px rgba(0,0,0,0.3));
+        animation: heroFloat 5s ease-in-out infinite;
+    }
     .cta-badge {
         display: inline-block; margin-bottom: 20px;
         background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85);
@@ -1055,21 +1010,22 @@
     }
 
     .cat-icon-wrap {
-        position: relative; width: 56px; height: 56px;
+        position: relative; width: 104px; height: 80px;
     }
-    .cat-emoji {
+    .cat-img {
         position: relative; z-index: 1;
-        font-size: 2rem; line-height: 56px; display: block; text-align: center;
+        width: 100%; height: 100%; object-fit: contain; display: block;
+        padding: 6px; box-sizing: border-box;
         transition: transform .3s cubic-bezier(.34,1.56,.64,1);
     }
     .cat-icon-bg {
-        position: absolute; inset: 0; border-radius: 14px;
+        position: absolute; inset: 0; border-radius: 16px;
         background: linear-gradient(135deg, var(--g));
-        opacity: .15;
+        opacity: .12;
         transition: opacity .25s;
     }
-    .cat-card:hover .cat-emoji { transform: scale(1.25) rotate(-8deg); }
-    .cat-card:hover .cat-icon-bg { opacity: .28; }
+    .cat-card:hover .cat-img { transform: scale(1.1) rotate(-3deg); }
+    .cat-card:hover .cat-icon-bg { opacity: .24; }
 
     .cat-body h3 {
         font-size: 1.05rem; font-weight: 800; color: #0f172a;
