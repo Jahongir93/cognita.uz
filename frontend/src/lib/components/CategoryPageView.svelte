@@ -1,10 +1,17 @@
 <script lang="ts">
   import type { Category } from '$lib/data/categories';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
   import { openTests, type OpenTest } from '$lib/api/client';
 
   export let category: Category;
+
+  // Hero slider (har kategoriyaga 3 ta slayd)
+  const slides = [1, 2, 3].map(n => `/img/slides/slide-${category.id}-${n}.png`);
+  let slideIdx = 0;
+  let slideTimer: ReturnType<typeof setInterval>;
+  onMount(() => { slideTimer = setInterval(() => slideIdx = (slideIdx + 1) % slides.length, 5000); });
+  onDestroy(() => clearInterval(slideTimer));
 
   // Admin tomonidan qo'shilgan haqiqiy testlar (API)
   let apiTests: OpenTest[] = [];
@@ -36,12 +43,11 @@
 
 <!-- HERO -->
 <header class="hero" style="--g1:{category.g1};--g2:{category.g2}">
-  <div class="hero-bg" aria-hidden="true">
-    <div class="shape s1"></div>
-    <div class="shape s2"></div>
-    <div class="shape s3"></div>
-    <div class="shape s4"></div>
-    <div class="shape s5"></div>
+  <div class="hero-slider" aria-hidden="true">
+    {#each slides as src, i}
+      <div class="hslide" class:on={i === slideIdx} style="background-image:url('{src}')"></div>
+    {/each}
+    <div class="hero-scrim"></div>
   </div>
   <div class="hero-inner">
     <div class="hero-icon">{category.icon}</div>
@@ -58,6 +64,11 @@
         <span class="stat-lbl">yechilgan</span>
       </div>
     </div>
+  </div>
+  <div class="hero-dots">
+    {#each slides as _, i}
+      <button class="hdot" class:on={i === slideIdx} on:click={() => slideIdx = i} aria-label="Slayd {i + 1}"></button>
+    {/each}
   </div>
 </header>
 
@@ -155,25 +166,30 @@
     padding: 60px 24px 50px;
     text-align: center;
   }
-  .hero-bg {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
+  .hero-slider { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+  .hslide {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center;
+    opacity: 0; transition: opacity 1s ease;
   }
-  .shape {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.08);
+  .hslide.on { opacity: 1; }
+  .hero-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, rgba(15,14,30,0.72) 0%, rgba(15,14,30,0.45) 50%, rgba(15,14,30,0.32) 100%);
   }
-  .s1 { width: 320px; height: 320px; top: -100px; left: -80px; }
-  .s2 { width: 220px; height: 220px; top: 20px; right: 8%; opacity: 0.5; }
-  .s3 { width: 160px; height: 160px; bottom: -50px; left: 25%; opacity: 0.4; }
-  .s4 { width: 90px;  height: 90px;  top: 45%;  right: 4%; opacity: 0.6; }
-  .s5 { width: 120px; height: 120px; bottom: 10px; right: 22%; opacity: 0.3; }
+  .hero-dots {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    z-index: 3; display: flex; gap: 8px;
+  }
+  .hdot {
+    width: 9px; height: 9px; border-radius: 50%; border: none; padding: 0;
+    background: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.25s;
+  }
+  .hdot.on { background: #fff; width: 26px; border-radius: 99px; }
 
   .hero-inner {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     max-width: 700px;
     margin: 0 auto;
   }
