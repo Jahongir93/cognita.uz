@@ -1,30 +1,37 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
-    import { quizzes as quizzesApi, rooms as roomsApi } from '$lib/api/client';
+    import { quizzes as quizzesApi, rooms as roomsApi, openTests, type OpenTest } from '$lib/api/client';
     import type { Quiz } from '$lib/api/types';
     import { allCategories } from '$lib/data/categories';
-    import type { Category, Test } from '$lib/data/categories';
+    import type { Category } from '$lib/data/categories';
 
     // ── Tabs ───────────────────────────────────────────────────────────────────
     let activeTab: 'categories' | 'teachers' = 'categories';
 
-    // ── Category section state ─────────────────────────────────────────────────
+    // ── Category section state (Cognita katalog testlari — API) ────────────────
     let selectedCat: Category = allCategories[0];
-    let selectedSubcat = 'all';
     let catSearch = '';
+    let allApiTests: OpenTest[] = [];
+    let loadingCats = true;
 
-    $: catTests = selectedCat.tests.filter(t => {
-        const matchSub = selectedSubcat === 'all' || t.subcat === selectedSubcat;
-        const matchSearch = !catSearch || t.title.toLowerCase().includes(catSearch.toLowerCase())
-            || t.description.toLowerCase().includes(catSearch.toLowerCase());
-        return matchSub && matchSearch;
-    });
+    async function loadCatalog() {
+        loadingCats = true;
+        try { allApiTests = await openTests.list(''); } catch { allApiTests = []; }
+        loadingCats = false;
+    }
 
-    $: catSortedTests = [...catTests].sort((a, b) => b.plays - a.plays);
+    function catCount(id: string) { return allApiTests.filter(t => t.category === id).length; }
 
-    // Total tests count across all categories
-    $: totalTests = allCategories.reduce((s, c) => s + c.tests.length, 0);
+    $: catApiTests = allApiTests
+        .filter(t => t.category === selectedCat.id)
+        .filter(t => !catSearch
+            || t.title.toLowerCase().includes(catSearch.toLowerCase())
+            || (t.description ?? '').toLowerCase().includes(catSearch.toLowerCase()));
+
+    $: totalTests = allApiTests.length;
+
+    function solveTest(t: OpenTest) { goto(`/test/${t.id}`); }
 
     // ── Teacher quizzes state ──────────────────────────────────────────────────
     let quizzes: Quiz[] = [];
@@ -50,7 +57,7 @@
         }
     }
 
-    onMount(() => loadQuizzes());
+    onMount(() => { loadQuizzes(); loadCatalog(); });
 
     $: { search; clearTimeout(searchTimer); searchTimer = setTimeout(loadQuizzes, 300); }
     $: { subjectFilter; gradeFilter; loadQuizzes(); }
@@ -77,11 +84,6 @@
         shuffleQuestions = false;
         showLeaderboard = true;
         showGameModal = true;
-    }
-
-    function openCatGameModal(test: Test) {
-        // Katalog (ochiq testlar) sahifasiga yo'naltirish
-        goto('/dashboard/open-tests');
     }
 
     function closeModal() { showGameModal = false; }
@@ -153,7 +155,7 @@
     <div class="hero-content">
         <div class="hero-text">
             <h1>Discovery</h1>
-            <p>Admin kategoriyalari va o'qituvchilar yaratgan testlarni toping</p>
+            <p>Cognita kategoriyalari va o'qituvchilar yaratgan testlarni toping</p>
         </div>
         <div class="hero-stats">
             <div class="hstat">
@@ -187,7 +189,7 @@
     >
         <span class="tab-icon-lg">📂</span>
         <div class="tab-info">
-            <span class="tab-title">Admin Kategoriyalar</span>
+            <span class="tab-title">Cognita Kategoriyalar</span>
             <span class="tab-sub">{totalTests} ta test · {allCategories.length} ta bo'lim</span>
         </div>
     </button>
@@ -215,12 +217,12 @@
             <button
                 class="cat-pill"
                 class:active={selectedCat.id === cat.id}
-                on:click={() => { selectedCat = cat; selectedSubcat = 'all'; catSearch = ''; }}
+                on:click={() => { selectedCat = cat; catSearch = ''; }}
                 style="--cc1:{cat.g1}; --cc2:{cat.g2}"
             >
                 <span class="cp-icon">{cat.icon}</span>
                 <span class="cp-label">{cat.title}</span>
-                <span class="cp-count">{cat.tests.length}</span>
+                <span class="cp-count">{catCount(cat.id)}</span>
             </button>
         {/each}
     </div>
@@ -247,72 +249,49 @@
         </div>
     </div>
 
-    <!-- Subcategory filter -->
-    <div class="subcat-row">
-        {#each selectedCat.subcats as sub}
-            <button
-                class="subcat-btn"
-                class:active={selectedSubcat === sub.id}
-                on:click={() => selectedSubcat = sub.id}
-            >
-                {sub.icon} {sub.label}
-            </button>
-        {/each}
-    </div>
-
     <!-- Results info -->
     <div class="results-bar">
-        <span class="results-txt">{catSortedTests.length} ta test</span>
+        <span class="results-txt">{catApiTests.length} ta test</span>
         {#if catSearch}
             <button class="clear-search-btn" on:click={() => catSearch = ''}>✕ Tozalash</button>
         {/if}
     </div>
 
-    <!-- Tests grid -->
-    {#if catSortedTests.length === 0}
+    <!-- Tests grid (Cognita katalog — haqiqiy testlar) -->
+    {#if loadingCats}
+        <div class="tests-grid">
+            {#each Array(6) as _}
+                <div class="skeleton-card"><div class="skel-cover"></div><div class="skel-body"><div class="skel-line wide"></div><div class="skel-line medium"></div></div></div>
+            {/each}
+        </div>
+    {:else if catApiTests.length === 0}
         <div class="empty-state">
-            <div class="empty-emoji">🔍</div>
-            <p class="empty-title">Test topilmadi</p>
-            <p class="empty-sub">Boshqa kalit so'z yoki bo'limni sinab ko'ring</p>
-            <button class="btn secondary" on:click={() => { catSearch = ''; selectedSubcat = 'all'; }}>
-                Filtrlarni tozalash
-            </button>
+            <div class="empty-emoji">📭</div>
+            <p class="empty-title">{selectedCat.title} bo'yicha hali test yo'q</p>
+            <p class="empty-sub">Admin Katalogga test qo'shganda shu yerda ko'rinadi</p>
         </div>
     {:else}
         <div class="tests-grid">
-            {#each catSortedTests as test (test.id)}
+            {#each catApiTests as t (t.id)}
                 <div class="test-card">
-                    <!-- Difficulty strip -->
-                    <div class="test-strip" style="background:{diffColor(test.difficulty)}"></div>
-
+                    <div class="test-strip" style="background:linear-gradient(135deg,{selectedCat.g1},{selectedCat.g2})"></div>
                     <div class="test-body">
                         <div class="test-top">
-                            <span class="test-icon">{test.icon}</span>
+                            <span class="test-icon">{selectedCat.icon}</span>
                             <div class="test-badges">
-                                {#if test.isNew}<span class="badge new-badge">Yangi</span>{/if}
-                                {#if test.isHot}<span class="badge hot-badge">🔥 Trend</span>{/if}
-                                <span class="badge diff-badge" style="color:{diffColor(test.difficulty)};background:{diffColor(test.difficulty)}18">
-                                    {diffLabel(test.difficulty)}
-                                </span>
+                                {#if t.scored}<span class="badge hot-badge">🏆 Reytingli</span>{/if}
                             </div>
                         </div>
-
-                        <h3 class="test-title">{test.title}</h3>
-                        <p class="test-desc">{test.description}</p>
-
+                        <h3 class="test-title">{t.title}</h3>
+                        <p class="test-desc">{t.description || '—'}</p>
                         <div class="test-meta-row">
-                            <span class="tmeta">📌 {test.questions} savol</span>
-                            <span class="tmeta">⏱ {test.duration} min</span>
-                            <span class="tmeta plays">▶ {formatPlays(test.plays)}</span>
+                            <span class="tmeta">📌 {t.questions} savol</span>
+                            <span class="tmeta plays">▶ {formatPlays(t.play_count)}</span>
                         </div>
-
                         <div class="test-footer">
-                            <div class="rating">
-                                <span class="stars">{stars(test.rating)}</span>
-                                <span class="rating-num">{test.rating.toFixed(1)}</span>
-                            </div>
-                            <button class="btn primary sm" on:click={() => openCatGameModal(test)}>
-                                O'ynash →
+                            <span class="tmeta">{t.scored ? 'Ballanadi' : 'Reytingsiz'}</span>
+                            <button class="btn primary sm" on:click={() => solveTest(t)}>
+                                Ochish →
                             </button>
                         </div>
                     </div>
