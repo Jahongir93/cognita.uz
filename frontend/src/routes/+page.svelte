@@ -9,7 +9,7 @@
     let featVisible = false;
 
     // Cycling hero words
-    const heroWords = ["qiziqarli!", "sehrli!", "ajoyib!", "o'yin!"];
+    const heroWords = ["qiziqarli!", "zavqli!", "ajoyib!", "o'yin!"];
     let currentWord = heroWords[0];
     let wordFading = false;
 
@@ -377,7 +377,7 @@
     <div class="cta-inner">
         <img src="/img/mascot.png" alt="" class="cta-mascot" />
         <div class="cta-badge">🎉 Bugun 500+ o'qituvchi foydalanmoqda</div>
-        <h2 class="cta-title">Darsni sehrga aylantiring</h2>
+        <h2 class="cta-title">Darsni qiziqarli o'yinga aylantiring</h2>
         <p class="cta-sub">Ro'yxatdan o'tish bir daqiqa, birinchi quiz yaratish esa uch daqiqa oladi.</p>
         <div class="cta-btns">
             <a href="/auth/register?role=teacher" class="btn-cta-main">
